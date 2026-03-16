@@ -1,6 +1,7 @@
 const express = require("express")
 const mongoose = require("mongoose")
 const cors = require("cors")
+const nodeRoutes = require("./routes/nodes")
 require("dotenv").config()
 
 // Importar rutas
@@ -20,6 +21,8 @@ app.get("/", (req, res) => {
 
 // Rutas
 app.use("/missions", missionRoutes)
+
+app.use("/nodes", nodeRoutes)
 
 // Conexión a MongoDB
 mongoose.connect(process.env.MONGO_URI)
