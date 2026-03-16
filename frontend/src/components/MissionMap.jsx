@@ -1,14 +1,14 @@
-import React, { useEffect, useState } from "react"
-import ReactFlow from "reactflow"
+import React, { useEffect, useState, useCallback } from "react"
+import ReactFlow, { useNodesState } from "reactflow"
 import "reactflow/dist/style.css"
 import axios from "axios"
 
 function MissionMap() {
 
-  const [nodes, setNodes] = useState([])
-  const [edges, setEdges] = useState([])
+  const missionId = "69b7e9a930d53c9aceac26d1"
 
-  const missionId = "69b7e9a930d53c9aceac26d1" // tu misión actual
+  const [nodes, setNodes, onNodesChange] = useNodesState([])
+  const [edges, setEdges] = useState([])
 
   useEffect(() => {
 
@@ -38,11 +38,64 @@ function MissionMap() {
 
   }, [])
 
+  const onPaneClick = useCallback(async (event) => {
+
+    const position = {
+      x: event.clientX,
+      y: event.clientY
+    }
+
+    try {
+
+      const res = await axios.post("http://localhost:5000/nodes", {
+        missionId,
+        title: "Nuevo Nodo",
+        position
+      })
+
+      const newNode = {
+        id: res.data._id,
+        position: res.data.position,
+        data: { label: res.data.title }
+      }
+
+      setNodes((nds) => [...nds, newNode])
+
+    } catch (error) {
+
+      console.error(error)
+
+    }
+
+  }, [])
+
+  const onNodeDragStop = async (event, node) => {
+
+    try {
+
+      await axios.put(`http://localhost:5000/nodes/${node.id}`, {
+        position: node.position
+      })
+
+    } catch (error) {
+
+      console.error(error)
+
+    }
+
+  }
+
   return (
 
     <div style={{ width: "100%", height: "600px" }}>
 
-      <ReactFlow nodes={nodes} edges={edges} />
+      <ReactFlow
+        nodes={nodes}
+        edges={edges}
+        onNodesChange={onNodesChange}
+        onPaneClick={onPaneClick}
+        onNodeDragStop={onNodeDragStop}
+      />
 
     </div>
 
