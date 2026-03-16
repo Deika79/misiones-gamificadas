@@ -1,5 +1,10 @@
 import React, { useEffect, useState, useCallback } from "react"
-import ReactFlow, { useNodesState } from "reactflow"
+import ReactFlow, {
+  useNodesState,
+  useEdgesState,
+  addEdge
+} from "reactflow"
+
 import "reactflow/dist/style.css"
 import axios from "axios"
 
@@ -8,7 +13,7 @@ function MissionMap() {
   const missionId = "69b7e9a930d53c9aceac26d1"
 
   const [nodes, setNodes, onNodesChange] = useNodesState([])
-  const [edges, setEdges] = useState([])
+  const [edges, setEdges, onEdgesChange] = useEdgesState([])
 
   useEffect(() => {
 
@@ -85,6 +90,12 @@ function MissionMap() {
 
   }
 
+  const onConnect = useCallback((params) => {
+
+    setEdges((eds) => addEdge(params, eds))
+
+  }, [])
+
   return (
 
     <div style={{ width: "100%", height: "600px" }}>
@@ -93,8 +104,11 @@ function MissionMap() {
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
+        onEdgesChange={onEdgesChange}
         onPaneClick={onPaneClick}
         onNodeDragStop={onNodeDragStop}
+        onConnect={onConnect}
+        fitView
       />
 
     </div>
