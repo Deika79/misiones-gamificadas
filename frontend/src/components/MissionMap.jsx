@@ -32,7 +32,20 @@ function MissionMap() {
           data: { label: node.title }
         }))
 
+        const formattedEdges = []
+
+        res.data.forEach(node => {
+          node.connections?.forEach(target => {
+            formattedEdges.push({
+              id: `${node._id}-${target}`,
+              source: node._id,
+              target: target
+            })
+          })
+        })
+
         setNodes(formattedNodes)
+        setEdges(formattedEdges)
 
       } catch (error) {
 
@@ -121,9 +134,22 @@ function MissionMap() {
 
   }
 
-  const onConnect = useCallback((params) => {
+  const onConnect = useCallback(async (params) => {
 
     setEdges((eds) => addEdge(params, eds))
+
+    try {
+
+      await axios.post("http://localhost:5000/nodes/connect", {
+        source: params.source,
+        target: params.target
+      })
+
+    } catch (error) {
+
+      console.error(error)
+
+    }
 
   }, [])
 

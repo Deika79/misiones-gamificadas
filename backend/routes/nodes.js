@@ -88,4 +88,37 @@ router.delete("/:id", async (req, res) => {
 
 })
 
+
+// Conectar nodos (guardar conexión)
+
+router.post("/connect", async (req, res) => {
+
+  try {
+
+    const { source, target } = req.body
+
+    const node = await Node.findById(source)
+
+    if (!node) {
+      return res.status(404).json({ error: "Nodo origen no encontrado" })
+    }
+
+    // evitar duplicados
+    if (!node.connections.includes(target)) {
+      node.connections.push(target)
+      await node.save()
+    }
+
+    res.json({
+      message: "Conexión guardada correctamente"
+    })
+
+  } catch (error) {
+
+    res.status(500).json({ error: error.message })
+
+  }
+
+})
+
 module.exports = router
