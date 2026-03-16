@@ -93,6 +93,34 @@ function MissionMap() {
 
   }
 
+  const onNodeDoubleClick = async (event, node) => {
+
+    const newName = prompt("Nuevo nombre del nodo:", node.data.label)
+
+    if (!newName) return
+
+    try {
+
+      await axios.put(`http://localhost:5000/nodes/${node.id}`, {
+        title: newName
+      })
+
+      setNodes((nds) =>
+        nds.map((n) =>
+          n.id === node.id
+            ? { ...n, data: { ...n.data, label: newName } }
+            : n
+        )
+      )
+
+    } catch (error) {
+
+      console.error(error)
+
+    }
+
+  }
+
   const onConnect = useCallback((params) => {
 
     setEdges((eds) => addEdge(params, eds))
@@ -110,6 +138,7 @@ function MissionMap() {
         onEdgesChange={onEdgesChange}
         onPaneClick={onPaneClick}
         onNodeDragStop={onNodeDragStop}
+        onNodeDoubleClick={onNodeDoubleClick}
         onConnect={onConnect}
         fitView
       />
