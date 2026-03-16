@@ -1,12 +1,19 @@
 import MissionMap from "./components/MissionMap"
+import { ReactFlowProvider } from "reactflow"
 
 function App() {
 
   return (
-    <div>
-      <h1>Mapa de Misiones</h1>
-      <MissionMap />
-    </div>
+
+    <ReactFlowProvider>
+
+      <div>
+        <h1>Mapa de Misiones</h1>
+        <MissionMap />
+      </div>
+
+    </ReactFlowProvider>
+
   )
 
 }

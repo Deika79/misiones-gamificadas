@@ -2,7 +2,8 @@ import React, { useEffect, useState, useCallback } from "react"
 import ReactFlow, {
   useNodesState,
   useEdgesState,
-  addEdge
+  addEdge,
+  useReactFlow
 } from "reactflow"
 
 import "reactflow/dist/style.css"
@@ -11,6 +12,8 @@ import axios from "axios"
 function MissionMap() {
 
   const missionId = "69b7e9a930d53c9aceac26d1"
+
+  const { screenToFlowPosition } = useReactFlow()
 
   const [nodes, setNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
@@ -45,10 +48,10 @@ function MissionMap() {
 
   const onPaneClick = useCallback(async (event) => {
 
-    const position = {
+    const position = screenToFlowPosition({
       x: event.clientX,
       y: event.clientY
-    }
+    })
 
     try {
 
@@ -72,7 +75,7 @@ function MissionMap() {
 
     }
 
-  }, [])
+  }, [screenToFlowPosition])
 
   const onNodeDragStop = async (event, node) => {
 
