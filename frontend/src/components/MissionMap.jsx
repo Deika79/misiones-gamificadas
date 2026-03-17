@@ -155,7 +155,15 @@ function MissionMap() {
 
   return (
 
-    <div style={{ width: "100%", height: "600px" }}>
+    <div
+      style={{
+        width: "100%",
+        height: "600px",
+        backgroundImage: "url('/maps/map1.png')",
+        backgroundSize: "cover",
+        backgroundPosition: "center"
+      }}
+    >
 
       <ReactFlow
         nodes={nodes}
