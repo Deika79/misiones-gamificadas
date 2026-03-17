@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react"
 import axios from "axios"
+import TaskList from "./TaskList"
 
 function NodeEditor({ node, onUpdate, onDelete }) {
 
@@ -46,7 +47,7 @@ function NodeEditor({ node, onUpdate, onDelete }) {
 
   const deleteNode = async () => {
 
-    if (!window.confirm("¿Eliminar este nodo?")) return
+    if (!window.confirm("¿Eliminar nodo?")) return
 
     await axios.delete(
       `http://localhost:5000/nodes/${node.id}`
@@ -66,7 +67,9 @@ function NodeEditor({ node, onUpdate, onDelete }) {
         Nombre
         <input
           value={title}
-          onChange={(e) => setTitle(e.target.value)}
+          onChange={(e) =>
+            setTitle(e.target.value)
+          }
         />
       </div>
 
@@ -74,7 +77,9 @@ function NodeEditor({ node, onUpdate, onDelete }) {
         Tipo
         <select
           value={type}
-          onChange={(e) => setType(e.target.value)}
+          onChange={(e) =>
+            setType(e.target.value)
+          }
         >
 
           <option value="city">Ciudad</option>
@@ -90,7 +95,9 @@ function NodeEditor({ node, onUpdate, onDelete }) {
         Descripción
         <textarea
           value={description}
-          onChange={(e) => setDescription(e.target.value)}
+          onChange={(e) =>
+            setDescription(e.target.value)
+          }
         />
       </div>
 
@@ -102,10 +109,15 @@ function NodeEditor({ node, onUpdate, onDelete }) {
 
       <button
         onClick={deleteNode}
-        style={{ background: "red", color: "white" }}
+        style={{
+          background: "red",
+          color: "white"
+        }}
       >
         Eliminar Nodo
       </button>
+
+      <TaskList nodeId={node.id} />
 
     </div>
 

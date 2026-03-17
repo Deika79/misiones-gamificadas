@@ -10,6 +10,8 @@ const missionRoutes = require("./routes/missions")
 // Crear app
 const app = express()
 
+const taskRoutes = require("./routes/tasks")
+
 // Middlewares
 app.use(cors())
 app.use(express.json())
@@ -23,6 +25,7 @@ app.get("/", (req, res) => {
 app.use("/missions", missionRoutes)
 
 app.use("/nodes", nodeRoutes)
+app.use("/tasks", taskRoutes)
 
 // Conexión a MongoDB
 mongoose.connect(process.env.MONGO_URI)
