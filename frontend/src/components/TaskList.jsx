@@ -1,9 +1,11 @@
 import React, { useEffect, useState } from "react"
 import axios from "axios"
+import TaskEditor from "./TaskEditor"
 
 function TaskList({ nodeId }) {
 
   const [tasks, setTasks] = useState([])
+  const [editingTask, setEditingTask] = useState(null)
 
   const loadTasks = async () => {
 
@@ -17,26 +19,19 @@ function TaskList({ nodeId }) {
 
   useEffect(() => {
 
-    if (nodeId) {
-      loadTasks()
-    }
+    if (nodeId) loadTasks()
 
   }, [nodeId])
 
   const createTask = async () => {
 
-    const title = prompt("Nombre de la tarea:")
+    const title = prompt("Nombre tarea")
     if (!title) return
-
-    const type = prompt(
-      "Tipo: text, quiz, video",
-      "text"
-    )
 
     await axios.post("http://localhost:5000/tasks", {
       nodeId,
       title,
-      type
+      type: "text"
     })
 
     loadTasks()
@@ -72,7 +67,10 @@ function TaskList({ nodeId }) {
           }}
         >
 
-          <span>
+          <span
+            style={{ cursor: "pointer" }}
+            onClick={() => setEditingTask(task._id)}
+          >
             {task.title}
           </span>
 
@@ -89,6 +87,18 @@ function TaskList({ nodeId }) {
       <button onClick={createTask}>
         + Nueva tarea
       </button>
+
+      {editingTask && (
+
+        <TaskEditor
+          taskId={editingTask}
+          onClose={() => {
+            setEditingTask(null)
+            loadTasks()
+          }}
+        />
+
+      )}
 
     </div>
 

@@ -25,7 +25,7 @@ const TaskSchema = new mongoose.Schema({
 
   xpReward: {
     type: Number,
-    default: 0
+    default: 10
   },
 
   createdAt: {
