@@ -3,9 +3,10 @@ const router = express.Router()
 
 const Task = require("../models/Task")
 
+
 // Obtener tareas de un nodo
 
-router.get("/:nodeId", async (req, res) => {
+router.get("/node/:nodeId", async (req, res) => {
 
   try {
 
@@ -14,6 +15,25 @@ router.get("/:nodeId", async (req, res) => {
     })
 
     res.json(tasks)
+
+  } catch (error) {
+
+    res.status(500).json({ error: error.message })
+
+  }
+
+})
+
+
+// Obtener una tarea
+
+router.get("/:id", async (req, res) => {
+
+  try {
+
+    const task = await Task.findById(req.params.id)
+
+    res.json(task)
 
   } catch (error) {
 

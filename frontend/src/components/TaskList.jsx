@@ -10,7 +10,7 @@ function TaskList({ nodeId }) {
   const loadTasks = async () => {
 
     const res = await axios.get(
-      `http://localhost:5000/tasks/${nodeId}`
+      `http://localhost:5000/tasks/node/${nodeId}`
     )
 
     setTasks(res.data)
