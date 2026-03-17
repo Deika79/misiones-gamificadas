@@ -1,4 +1,5 @@
 import React from "react"
+import { Handle, Position } from "reactflow"
 
 function MapNode({ data }) {
 
@@ -36,11 +37,15 @@ function MapNode({ data }) {
         borderRadius: "8px",
         background: "rgba(255,255,255,0.9)",
         border: "2px solid #333",
-        fontSize: "14px",
         textAlign: "center",
         minWidth: "70px"
       }}
     >
+
+      <Handle
+        type="target"
+        position={Position.Top}
+      />
 
       <div style={{ fontSize: "22px" }}>
         {getIcon()}
@@ -49,6 +54,11 @@ function MapNode({ data }) {
       <div>
         {data.label}
       </div>
+
+      <Handle
+        type="source"
+        position={Position.Bottom}
+      />
 
     </div>
 

@@ -1,16 +1,18 @@
 const express = require("express")
 const mongoose = require("mongoose")
 const cors = require("cors")
-const nodeRoutes = require("./routes/nodes")
 require("dotenv").config()
 
 // Importar rutas
 const missionRoutes = require("./routes/missions")
+const nodeRoutes = require("./routes/nodes")
+const taskRoutes = require("./routes/tasks")
+
+const courseRoutes = require("./routes/courses")
+const chapterRoutes = require("./routes/chapters")
 
 // Crear app
 const app = express()
-
-const taskRoutes = require("./routes/tasks")
 
 // Middlewares
 app.use(cors())
@@ -21,11 +23,14 @@ app.get("/", (req, res) => {
   res.send("API Misiones funcionando")
 })
 
-// Rutas
+// Rutas existentes
 app.use("/missions", missionRoutes)
-
 app.use("/nodes", nodeRoutes)
 app.use("/tasks", taskRoutes)
+
+// NUEVAS rutas
+app.use("/courses", courseRoutes)
+app.use("/chapters", chapterRoutes)
 
 // Conexión a MongoDB
 mongoose.connect(process.env.MONGO_URI)

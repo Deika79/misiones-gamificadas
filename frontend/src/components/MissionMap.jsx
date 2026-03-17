@@ -31,7 +31,9 @@ function MissionMap() {
 
     const loadNodes = async () => {
 
-      const res = await axios.get(`http://localhost:5000/nodes/${missionId}`)
+      const res = await axios.get(
+        `http://localhost:5000/nodes/${missionId}`
+      )
 
       const formattedNodes = res.data.map(node => ({
         id: node._id,
@@ -47,13 +49,22 @@ function MissionMap() {
       const formattedEdges = []
 
       res.data.forEach(node => {
+
         node.connections?.forEach(target => {
+
           formattedEdges.push({
             id: `${node._id}-${target}`,
             source: node._id,
-            target: target
+            target: target,
+            type: "smoothstep",
+            style: {
+              stroke: "#000",
+              strokeWidth: 3
+            }
           })
+
         })
+
       })
 
       setNodes(formattedNodes)
@@ -80,12 +91,15 @@ function MissionMap() {
       "city"
     )
 
-    const res = await axios.post("http://localhost:5000/nodes", {
-      missionId,
-      title,
-      type,
-      position
-    })
+    const res = await axios.post(
+      "http://localhost:5000/nodes",
+      {
+        missionId,
+        title,
+        type,
+        position
+      }
+    )
 
     const newNode = {
       id: res.data._id,
@@ -107,20 +121,38 @@ function MissionMap() {
 
   const onNodeDragStop = async (event, node) => {
 
-    await axios.put(`http://localhost:5000/nodes/${node.id}`, {
-      position: node.position
-    })
+    await axios.put(
+      `http://localhost:5000/nodes/${node.id}`,
+      {
+        position: node.position
+      }
+    )
 
   }
 
   const onConnect = useCallback(async (params) => {
 
-    setEdges((eds) => addEdge(params, eds))
+    setEdges((eds) =>
+      addEdge(
+        {
+          ...params,
+          type: "smoothstep",
+          style: {
+            stroke: "#000",
+            strokeWidth: 3
+          }
+        },
+        eds
+      )
+    )
 
-    await axios.post("http://localhost:5000/nodes/connect", {
-      source: params.source,
-      target: params.target
-    })
+    await axios.post(
+      "http://localhost:5000/nodes/connect",
+      {
+        source: params.source,
+        target: params.target
+      }
+    )
 
   }, [])
 
@@ -172,46 +204,44 @@ function MissionMap() {
       >
 
         <NodeEditor
-  node={selectedNode}
+          node={selectedNode}
+          onUpdate={(updatedNode) => {
 
-  onUpdate={(updatedNode) => {
+            setNodes((nds) =>
+              nds.map((n) =>
+                n.id === updatedNode._id
+                  ? {
+                      ...n,
+                      data: {
+                        ...n.data,
+                        label: updatedNode.title,
+                        type: updatedNode.type,
+                        description: updatedNode.description
+                      }
+                    }
+                  : n
+              )
+            )
 
-    setNodes((nds) =>
-      nds.map((n) =>
-        n.id === updatedNode._id
-          ? {
-              ...n,
-              data: {
-                ...n.data,
-                label: updatedNode.title,
-                type: updatedNode.type,
-                description: updatedNode.description
-              }
-            }
-          : n
-      )
-    )
+          }}
+          onDelete={(nodeId) => {
 
-  }}
+            setNodes((nds) =>
+              nds.filter((n) => n.id !== nodeId)
+            )
 
-  onDelete={(nodeId) => {
+            setEdges((eds) =>
+              eds.filter(
+                (e) =>
+                  e.source !== nodeId &&
+                  e.target !== nodeId
+              )
+            )
 
-    setNodes((nds) =>
-      nds.filter((n) => n.id !== nodeId)
-    )
+            setSelectedNode(null)
 
-    setEdges((eds) =>
-      eds.filter(
-        (e) =>
-          e.source !== nodeId &&
-          e.target !== nodeId
-      )
-    )
-
-    setSelectedNode(null)
-
-  }}
-/>
+          }}
+        />
 
       </div>
 
