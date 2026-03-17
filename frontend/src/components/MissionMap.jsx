@@ -11,6 +11,12 @@ import ReactFlow, {
 import "reactflow/dist/style.css"
 import axios from "axios"
 
+import MapNode from "./MapNode"
+
+const nodeTypes = {
+  mapNode: MapNode
+}
+
 function MissionMap() {
 
   const missionId = "69b7e9a930d53c9aceac26d1"
@@ -24,36 +30,32 @@ function MissionMap() {
 
     const loadNodes = async () => {
 
-      try {
+      const res = await axios.get(`http://localhost:5000/nodes/${missionId}`)
 
-        const res = await axios.get(`http://localhost:5000/nodes/${missionId}`)
+      const formattedNodes = res.data.map(node => ({
+        id: node._id,
+        type: "mapNode",
+        position: node.position,
+        data: {
+          label: node.title,
+          type: "city"
+        }
+      }))
 
-        const formattedNodes = res.data.map(node => ({
-          id: node._id,
-          position: node.position,
-          data: { label: node.title }
-        }))
+      const formattedEdges = []
 
-        const formattedEdges = []
-
-        res.data.forEach(node => {
-          node.connections?.forEach(target => {
-            formattedEdges.push({
-              id: `${node._id}-${target}`,
-              source: node._id,
-              target: target
-            })
+      res.data.forEach(node => {
+        node.connections?.forEach(target => {
+          formattedEdges.push({
+            id: `${node._id}-${target}`,
+            source: node._id,
+            target: target
           })
         })
+      })
 
-        setNodes(formattedNodes)
-        setEdges(formattedEdges)
-
-      } catch (error) {
-
-        console.error(error)
-
-      }
+      setNodes(formattedNodes)
+      setEdges(formattedEdges)
 
     }
 
@@ -68,43 +70,31 @@ function MissionMap() {
       y: event.clientY
     })
 
-    try {
+    const res = await axios.post("http://localhost:5000/nodes", {
+      missionId,
+      title: "Nuevo Nodo",
+      position
+    })
 
-      const res = await axios.post("http://localhost:5000/nodes", {
-        missionId,
-        title: "Nuevo Nodo",
-        position
-      })
-
-      const newNode = {
-        id: res.data._id,
-        position: res.data.position,
-        data: { label: res.data.title }
+    const newNode = {
+      id: res.data._id,
+      type: "mapNode",
+      position: res.data.position,
+      data: {
+        label: res.data.title,
+        type: "city"
       }
-
-      setNodes((nds) => [...nds, newNode])
-
-    } catch (error) {
-
-      console.error(error)
-
     }
+
+    setNodes((nds) => [...nds, newNode])
 
   }, [screenToFlowPosition])
 
   const onNodeDragStop = async (event, node) => {
 
-    try {
-
-      await axios.put(`http://localhost:5000/nodes/${node.id}`, {
-        position: node.position
-      })
-
-    } catch (error) {
-
-      console.error(error)
-
-    }
+    await axios.put(`http://localhost:5000/nodes/${node.id}`, {
+      position: node.position
+    })
 
   }
 
@@ -114,25 +104,17 @@ function MissionMap() {
 
     if (!newName) return
 
-    try {
+    await axios.put(`http://localhost:5000/nodes/${node.id}`, {
+      title: newName
+    })
 
-      await axios.put(`http://localhost:5000/nodes/${node.id}`, {
-        title: newName
-      })
-
-      setNodes((nds) =>
-        nds.map((n) =>
-          n.id === node.id
-            ? { ...n, data: { ...n.data, label: newName } }
-            : n
-        )
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === node.id
+          ? { ...n, data: { ...n.data, label: newName } }
+          : n
       )
-
-    } catch (error) {
-
-      console.error(error)
-
-    }
+    )
 
   }
 
@@ -140,18 +122,10 @@ function MissionMap() {
 
     setEdges((eds) => addEdge(params, eds))
 
-    try {
-
-      await axios.post("http://localhost:5000/nodes/connect", {
-        source: params.source,
-        target: params.target
-      })
-
-    } catch (error) {
-
-      console.error(error)
-
-    }
+    await axios.post("http://localhost:5000/nodes/connect", {
+      source: params.source,
+      target: params.target
+    })
 
   }, [])
 
@@ -170,6 +144,8 @@ function MissionMap() {
       <ReactFlow
         nodes={nodes}
         edges={edges}
+        nodeTypes={nodeTypes}
+
         onNodesChange={onNodesChange}
         onEdgesChange={onEdgesChange}
         onPaneClick={onPaneClick}
@@ -177,9 +153,8 @@ function MissionMap() {
         onNodeDoubleClick={onNodeDoubleClick}
         onConnect={onConnect}
 
-        zoomOnScroll={true}
-        panOnScroll={false}
-        panOnDrag={true}
+        zoomOnScroll
+        panOnDrag
 
         fitView
       >
