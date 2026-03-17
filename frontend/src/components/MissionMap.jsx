@@ -4,14 +4,14 @@ import ReactFlow, {
   useEdgesState,
   addEdge,
   useReactFlow,
-  Controls,
-  Background
+  Controls
 } from "reactflow"
 
 import "reactflow/dist/style.css"
 import axios from "axios"
 
 import MapNode from "./MapNode"
+import NodeEditor from "./NodeEditor"
 
 const nodeTypes = {
   mapNode: MapNode
@@ -25,6 +25,7 @@ function MissionMap() {
 
   const [nodes, setNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
+  const [selectedNode, setSelectedNode] = useState(null)
 
   useEffect(() => {
 
@@ -38,7 +39,8 @@ function MissionMap() {
         position: node.position,
         data: {
           label: node.title,
-          type: node.type || "city"
+          type: node.type || "city",
+          description: node.description || ""
         }
       }))
 
@@ -99,30 +101,15 @@ function MissionMap() {
 
   }, [screenToFlowPosition])
 
+  const onNodeClick = (event, node) => {
+    setSelectedNode(node)
+  }
+
   const onNodeDragStop = async (event, node) => {
 
     await axios.put(`http://localhost:5000/nodes/${node.id}`, {
       position: node.position
     })
-
-  }
-
-  const onNodeDoubleClick = async (event, node) => {
-
-    const newName = prompt("Nuevo nombre del nodo:", node.data.label)
-    if (!newName) return
-
-    await axios.put(`http://localhost:5000/nodes/${node.id}`, {
-      title: newName
-    })
-
-    setNodes((nds) =>
-      nds.map((n) =>
-        n.id === node.id
-          ? { ...n, data: { ...n.data, label: newName } }
-          : n
-      )
-    )
 
   }
 
@@ -139,39 +126,75 @@ function MissionMap() {
 
   return (
 
-    <div
-      style={{
-        width: "100%",
-        height: "600px",
-        backgroundImage: "url('/maps/map1.png')",
-        backgroundSize: "cover",
-        backgroundPosition: "center"
-      }}
-    >
+    <div style={{ display: "flex", height: "600px" }}>
 
-      <ReactFlow
-        nodes={nodes}
-        edges={edges}
-        nodeTypes={nodeTypes}
-
-        onNodesChange={onNodesChange}
-        onEdgesChange={onEdgesChange}
-        onPaneClick={onPaneClick}
-        onNodeDragStop={onNodeDragStop}
-        onNodeDoubleClick={onNodeDoubleClick}
-        onConnect={onConnect}
-
-        zoomOnScroll={false}
-        panOnDrag={true}
-        panOnScroll={true}
-
-        fitView
+      <div
+        style={{
+          flex: 3,
+          backgroundImage: "url('/maps/map1.png')",
+          backgroundSize: "cover",
+          backgroundPosition: "center"
+        }}
       >
 
-        <Controls />
-        <Background />
+        <ReactFlow
+          nodes={nodes}
+          edges={edges}
+          nodeTypes={nodeTypes}
 
-      </ReactFlow>
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onPaneClick={onPaneClick}
+          onNodeClick={onNodeClick}
+          onNodeDragStop={onNodeDragStop}
+          onConnect={onConnect}
+
+          zoomOnScroll={false}
+          zoomOnPinch={false}
+          panOnScroll={false}
+          panOnDrag={true}
+
+          fitView
+        >
+
+          <Controls />
+
+        </ReactFlow>
+
+      </div>
+
+      <div
+        style={{
+          flex: 1,
+          borderLeft: "1px solid #ccc",
+          background: "#f9f9f9"
+        }}
+      >
+
+        <NodeEditor
+          node={selectedNode}
+          onUpdate={(updatedNode) => {
+
+            setNodes((nds) =>
+              nds.map((n) =>
+                n.id === updatedNode._id
+                  ? {
+                      ...n,
+                      data: {
+                        ...n.data,
+                        label: updatedNode.title,
+                        type: updatedNode.type,
+                        description: updatedNode.description
+                      }
+                    }
+                  : n
+              )
+            )
+
+          }}
+        />
+
+      </div>
 
     </div>
 
