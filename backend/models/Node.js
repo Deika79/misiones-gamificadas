@@ -13,6 +13,11 @@ const NodeSchema = new mongoose.Schema({
     required: true
   },
 
+  type: {
+    type: String,
+    default: "city"
+  },
+
   description: {
     type: String,
     default: ""

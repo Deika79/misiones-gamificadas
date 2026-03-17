@@ -38,7 +38,7 @@ function MissionMap() {
         position: node.position,
         data: {
           label: node.title,
-          type: "city"
+          type: node.type || "city"
         }
       }))
 
@@ -70,9 +70,18 @@ function MissionMap() {
       y: event.clientY
     })
 
+    const title = prompt("Nombre del nodo:", "Nuevo Nodo")
+    if (!title) return
+
+    const type = prompt(
+      "Tipo de nodo: city, castle, dungeon, forest, mountain",
+      "city"
+    )
+
     const res = await axios.post("http://localhost:5000/nodes", {
       missionId,
-      title: "Nuevo Nodo",
+      title,
+      type,
       position
     })
 
@@ -82,7 +91,7 @@ function MissionMap() {
       position: res.data.position,
       data: {
         label: res.data.title,
-        type: "city"
+        type: res.data.type || "city"
       }
     }
 
@@ -101,7 +110,6 @@ function MissionMap() {
   const onNodeDoubleClick = async (event, node) => {
 
     const newName = prompt("Nuevo nombre del nodo:", node.data.label)
-
     if (!newName) return
 
     await axios.put(`http://localhost:5000/nodes/${node.id}`, {
@@ -153,8 +161,9 @@ function MissionMap() {
         onNodeDoubleClick={onNodeDoubleClick}
         onConnect={onConnect}
 
-        zoomOnScroll
-        panOnDrag
+        zoomOnScroll={false}
+        panOnDrag={true}
+        panOnScroll={true}
 
         fitView
       >
