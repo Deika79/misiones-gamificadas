@@ -7,7 +7,7 @@ function TaskEditor({ taskId, onClose }) {
 
   useEffect(() => {
 
-    const load = async () => {
+    const loadTask = async () => {
 
       const res = await axios.get(
         `http://localhost:5000/tasks/${taskId}`
@@ -17,13 +17,13 @@ function TaskEditor({ taskId, onClose }) {
 
     }
 
-    if (taskId) load()
+    if (taskId) loadTask()
 
   }, [taskId])
 
   if (!task) return null
 
-  const save = async () => {
+  const saveTask = async () => {
 
     await axios.put(
       `http://localhost:5000/tasks/${taskId}`,
@@ -36,26 +36,43 @@ function TaskEditor({ taskId, onClose }) {
 
   return (
 
-    <div style={{ padding: "10px", border: "1px solid #ccc", marginTop: "10px" }}>
+    <div
+      style={{
+        marginTop: "15px",
+        padding: "15px",
+        border: "1px solid #ccc",
+        background: "#fff"
+      }}
+    >
 
-      <h4>Editar Tarea</h4>
+      <h4>Editar tarea</h4>
 
-      <div>
-        Título
+      <div style={{ marginBottom: "10px" }}>
+        <label>Título</label>
+
         <input
+          style={{ width: "100%" }}
           value={task.title}
           onChange={(e) =>
-            setTask({ ...task, title: e.target.value })
+            setTask({
+              ...task,
+              title: e.target.value
+            })
           }
         />
       </div>
 
-      <div>
-        Tipo
+      <div style={{ marginBottom: "10px" }}>
+        <label>Tipo</label>
+
         <select
+          style={{ width: "100%" }}
           value={task.type}
           onChange={(e) =>
-            setTask({ ...task, type: e.target.value })
+            setTask({
+              ...task,
+              type: e.target.value
+            })
           }
         >
 
@@ -66,21 +83,28 @@ function TaskEditor({ taskId, onClose }) {
         </select>
       </div>
 
-      <div>
-        Contenido
+      <div style={{ marginBottom: "10px" }}>
+        <label>Contenido</label>
+
         <textarea
-          rows="4"
+          rows="5"
+          style={{ width: "100%" }}
           value={task.content}
           onChange={(e) =>
-            setTask({ ...task, content: e.target.value })
+            setTask({
+              ...task,
+              content: e.target.value
+            })
           }
         />
       </div>
 
-      <div>
-        XP recompensa
+      <div style={{ marginBottom: "10px" }}>
+        <label>XP recompensa</label>
+
         <input
           type="number"
+          style={{ width: "100%" }}
           value={task.xpReward}
           onChange={(e) =>
             setTask({
@@ -91,13 +115,17 @@ function TaskEditor({ taskId, onClose }) {
         />
       </div>
 
-      <button onClick={save}>
-        Guardar
-      </button>
+      <div style={{ display: "flex", gap: "10px" }}>
 
-      <button onClick={onClose}>
-        Cerrar
-      </button>
+        <button onClick={saveTask}>
+          Guardar
+        </button>
+
+        <button onClick={onClose}>
+          Cerrar
+        </button>
+
+      </div>
 
     </div>
 
