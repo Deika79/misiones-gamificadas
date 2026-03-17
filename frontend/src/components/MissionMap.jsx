@@ -172,27 +172,46 @@ function MissionMap() {
       >
 
         <NodeEditor
-          node={selectedNode}
-          onUpdate={(updatedNode) => {
+  node={selectedNode}
 
-            setNodes((nds) =>
-              nds.map((n) =>
-                n.id === updatedNode._id
-                  ? {
-                      ...n,
-                      data: {
-                        ...n.data,
-                        label: updatedNode.title,
-                        type: updatedNode.type,
-                        description: updatedNode.description
-                      }
-                    }
-                  : n
-              )
-            )
+  onUpdate={(updatedNode) => {
 
-          }}
-        />
+    setNodes((nds) =>
+      nds.map((n) =>
+        n.id === updatedNode._id
+          ? {
+              ...n,
+              data: {
+                ...n.data,
+                label: updatedNode.title,
+                type: updatedNode.type,
+                description: updatedNode.description
+              }
+            }
+          : n
+      )
+    )
+
+  }}
+
+  onDelete={(nodeId) => {
+
+    setNodes((nds) =>
+      nds.filter((n) => n.id !== nodeId)
+    )
+
+    setEdges((eds) =>
+      eds.filter(
+        (e) =>
+          e.source !== nodeId &&
+          e.target !== nodeId
+      )
+    )
+
+    setSelectedNode(null)
+
+  }}
+/>
 
       </div>
 

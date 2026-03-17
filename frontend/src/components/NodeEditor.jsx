@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 import axios from "axios"
 
-function NodeEditor({ node, onUpdate }) {
+function NodeEditor({ node, onUpdate, onDelete }) {
 
   const [title, setTitle] = useState("")
   const [type, setType] = useState("")
@@ -10,19 +10,23 @@ function NodeEditor({ node, onUpdate }) {
   useEffect(() => {
 
     if (node) {
+
       setTitle(node.data.label)
       setType(node.data.type || "city")
       setDescription(node.data.description || "")
+
     }
 
   }, [node])
 
   if (!node) {
+
     return (
       <div style={{ padding: "20px" }}>
         Selecciona un nodo
       </div>
     )
+
   }
 
   const save = async () => {
@@ -37,6 +41,18 @@ function NodeEditor({ node, onUpdate }) {
     )
 
     onUpdate(res.data)
+
+  }
+
+  const deleteNode = async () => {
+
+    if (!window.confirm("¿Eliminar este nodo?")) return
+
+    await axios.delete(
+      `http://localhost:5000/nodes/${node.id}`
+    )
+
+    onDelete(node.id)
 
   }
 
@@ -80,6 +96,15 @@ function NodeEditor({ node, onUpdate }) {
 
       <button onClick={save}>
         Guardar
+      </button>
+
+      <hr />
+
+      <button
+        onClick={deleteNode}
+        style={{ background: "red", color: "white" }}
+      >
+        Eliminar Nodo
       </button>
 
     </div>

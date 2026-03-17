@@ -76,6 +76,13 @@ router.delete("/:id", async (req, res) => {
 
     await Node.findByIdAndDelete(req.params.id)
 
+    // quitar conexiones que apuntaban a este nodo
+
+    await Node.updateMany(
+      {},
+      { $pull: { connections: req.params.id } }
+    )
+
     res.json({
       message: "Nodo eliminado correctamente"
     })
@@ -89,7 +96,7 @@ router.delete("/:id", async (req, res) => {
 })
 
 
-// Conectar nodos (guardar conexión)
+// Conectar nodos
 
 router.post("/connect", async (req, res) => {
 
@@ -99,18 +106,39 @@ router.post("/connect", async (req, res) => {
 
     const node = await Node.findById(source)
 
-    if (!node) {
-      return res.status(404).json({ error: "Nodo origen no encontrado" })
+    if (!node.connections.includes(target)) {
+
+      node.connections.push(target)
+
+      await node.save()
+
     }
 
-    // evitar duplicados
-    if (!node.connections.includes(target)) {
-      node.connections.push(target)
-      await node.save()
-    }
+    res.json({ message: "Conexión guardada" })
+
+  } catch (error) {
+
+    res.status(500).json({ error: error.message })
+
+  }
+
+})
+
+
+// Desconectar nodos
+
+router.post("/disconnect", async (req, res) => {
+
+  try {
+
+    const { source, target } = req.body
+
+    await Node.findByIdAndUpdate(source, {
+      $pull: { connections: target }
+    })
 
     res.json({
-      message: "Conexión guardada correctamente"
+      message: "Conexión eliminada"
     })
 
   } catch (error) {
