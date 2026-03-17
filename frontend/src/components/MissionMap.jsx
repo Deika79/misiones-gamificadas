@@ -3,7 +3,9 @@ import ReactFlow, {
   useNodesState,
   useEdgesState,
   addEdge,
-  useReactFlow
+  useReactFlow,
+  Controls,
+  Background
 } from "reactflow"
 
 import "reactflow/dist/style.css"
@@ -174,8 +176,18 @@ function MissionMap() {
         onNodeDragStop={onNodeDragStop}
         onNodeDoubleClick={onNodeDoubleClick}
         onConnect={onConnect}
+
+        zoomOnScroll={true}
+        panOnScroll={false}
+        panOnDrag={true}
+
         fitView
-      />
+      >
+
+        <Controls />
+        <Background />
+
+      </ReactFlow>
 
     </div>
 
