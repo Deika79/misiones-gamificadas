@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom"
 import { ReactFlowProvider } from "reactflow"
 
 import MissionMap from "./components/MissionMap"
+import StudentMissionMap from "./components/StudentMissionMap"
+
 import CoursesPage from "./pages/CoursesPage"
 import CourseDetailPage from "./pages/CourseDetailPage"
 import ChapterDetailPage from "./pages/ChapterDetailPage"
@@ -39,6 +41,12 @@ function App() {
           <Route
             path="/mission/:missionId"
             element={<MissionMap />}
+          />
+
+          {/* MODO ALUMNO */}
+          <Route
+            path="/play/mission/:missionId"
+            element={<StudentMissionMap />}
           />
 
         </Routes>
