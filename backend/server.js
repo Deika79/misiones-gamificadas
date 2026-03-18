@@ -14,6 +14,9 @@ const chapterRoutes = require("./routes/chapters")
 // Crear app
 const app = express()
 
+// NUEVA ruta para progreso alumno
+const progressRoutes = require("./routes/progress")
+
 // Middlewares
 app.use(cors())
 app.use(express.json())
@@ -31,6 +34,9 @@ app.use("/tasks", taskRoutes)
 // NUEVAS rutas
 app.use("/courses", courseRoutes)
 app.use("/chapters", chapterRoutes)
+
+// NUEVA ruta para progreso alumno
+app.use("/progress", progressRoutes)
 
 // Conexión a MongoDB
 mongoose.connect(process.env.MONGO_URI)
