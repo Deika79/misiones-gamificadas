@@ -1,18 +1,39 @@
-import MissionMap from "./components/MissionMap"
+import { BrowserRouter, Routes, Route } from "react-router-dom"
 import { ReactFlowProvider } from "reactflow"
+
+import MissionMap from "./components/MissionMap"
+import CoursesPage from "./pages/CoursesPage"
 
 function App() {
 
   return (
 
-    <ReactFlowProvider>
+    <BrowserRouter>
 
-      <div>
-        <h1>Mapa de Misiones</h1>
-        <MissionMap />
-      </div>
+      <ReactFlowProvider>
 
-    </ReactFlowProvider>
+        <Routes>
+
+          <Route
+            path="/"
+            element={
+              <div>
+                <h1>Mapa de Misiones</h1>
+                <MissionMap />
+              </div>
+            }
+          />
+
+          <Route
+            path="/courses"
+            element={<CoursesPage />}
+          />
+
+        </Routes>
+
+      </ReactFlowProvider>
+
+    </BrowserRouter>
 
   )
 
