@@ -4,16 +4,29 @@ import axios from "axios"
 function TaskEditor({ taskId, onClose }) {
 
   const [task, setTask] = useState(null)
+  const [loading, setLoading] = useState(false)
+
+  // ============================
+  // CARGAR TAREA
+  // ============================
 
   useEffect(() => {
 
     const loadTask = async () => {
 
-      const res = await axios.get(
-        `http://localhost:5000/tasks/${taskId}`
-      )
+      try {
 
-      setTask(res.data)
+        const res = await axios.get(
+          `http://localhost:5000/tasks/${taskId}`
+        )
+
+        setTask(res.data)
+
+      } catch (error) {
+
+        console.error("Error cargando tarea:", error)
+
+      }
 
     }
 
@@ -23,14 +36,32 @@ function TaskEditor({ taskId, onClose }) {
 
   if (!task) return null
 
+  // ============================
+  // GUARDAR TAREA
+  // ============================
+
   const saveTask = async () => {
 
-    await axios.put(
-      `http://localhost:5000/tasks/${taskId}`,
-      task
-    )
+    try {
 
-    alert("Tarea guardada")
+      setLoading(true)
+
+      await axios.put(
+        `http://localhost:5000/tasks/${taskId}`,
+        task
+      )
+
+      alert("Tarea guardada")
+
+    } catch (error) {
+
+      console.error("Error guardando tarea:", error)
+
+    } finally {
+
+      setLoading(false)
+
+    }
 
   }
 
@@ -41,13 +72,19 @@ function TaskEditor({ taskId, onClose }) {
         marginTop: "15px",
         padding: "15px",
         border: "1px solid #ccc",
+        borderRadius: "6px",
         background: "#fff"
       }}
     >
 
       <h4>Editar tarea</h4>
 
+      {/* ============================
+      TITULO
+      ============================ */}
+
       <div style={{ marginBottom: "10px" }}>
+
         <label>Título</label>
 
         <input
@@ -60,9 +97,15 @@ function TaskEditor({ taskId, onClose }) {
             })
           }
         />
+
       </div>
 
+      {/* ============================
+      TIPO
+      ============================ */}
+
       <div style={{ marginBottom: "10px" }}>
+
         <label>Tipo</label>
 
         <select
@@ -78,12 +121,43 @@ function TaskEditor({ taskId, onClose }) {
 
           <option value="text">Texto</option>
           <option value="quiz">Quiz</option>
-          <option value="video">Video</option>
+          <option value="multiple-choice">Multiple Choice</option>
+          <option value="upload">Subir archivo</option>
+          <option value="code">Código</option>
+          <option value="ai">Actividad IA</option>
 
         </select>
+
       </div>
 
+      {/* ============================
+      DESCRIPCIÓN
+      ============================ */}
+
       <div style={{ marginBottom: "10px" }}>
+
+        <label>Descripción</label>
+
+        <textarea
+          rows="2"
+          style={{ width: "100%" }}
+          value={task.description || ""}
+          onChange={(e) =>
+            setTask({
+              ...task,
+              description: e.target.value
+            })
+          }
+        />
+
+      </div>
+
+      {/* ============================
+      CONTENIDO
+      ============================ */}
+
+      <div style={{ marginBottom: "10px" }}>
+
         <label>Contenido</label>
 
         <textarea
@@ -97,9 +171,15 @@ function TaskEditor({ taskId, onClose }) {
             })
           }
         />
+
       </div>
 
+      {/* ============================
+      XP
+      ============================ */}
+
       <div style={{ marginBottom: "10px" }}>
+
         <label>XP recompensa</label>
 
         <input
@@ -113,12 +193,64 @@ function TaskEditor({ taskId, onClose }) {
             })
           }
         />
+
       </div>
+
+      {/* ============================
+      BONUS XP
+      ============================ */}
+
+      <div style={{ marginBottom: "10px" }}>
+
+        <label>Bonus XP</label>
+
+        <input
+          type="number"
+          style={{ width: "100%" }}
+          value={task.bonusXP || 0}
+          onChange={(e) =>
+            setTask({
+              ...task,
+              bonusXP: Number(e.target.value)
+            })
+          }
+        />
+
+      </div>
+
+      {/* ============================
+      INTENTOS
+      ============================ */}
+
+      <div style={{ marginBottom: "10px" }}>
+
+        <label>Intentos máximos</label>
+
+        <input
+          type="number"
+          style={{ width: "100%" }}
+          value={task.maxAttempts || 3}
+          onChange={(e) =>
+            setTask({
+              ...task,
+              maxAttempts: Number(e.target.value)
+            })
+          }
+        />
+
+      </div>
+
+      {/* ============================
+      BOTONES
+      ============================ */}
 
       <div style={{ display: "flex", gap: "10px" }}>
 
-        <button onClick={saveTask}>
-          Guardar
+        <button
+          onClick={saveTask}
+          disabled={loading}
+        >
+          {loading ? "Guardando..." : "Guardar"}
         </button>
 
         <button onClick={onClose}>
