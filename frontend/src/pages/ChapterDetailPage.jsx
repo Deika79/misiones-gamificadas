@@ -15,30 +15,20 @@ function ChapterDetailPage() {
   }, [])
 
   const loadMissions = async () => {
-    try {
-      const data = await getMissionsByChapter(id)
-      setMissions(data)
-    } catch (error) {
-      console.error("Error cargando misiones", error)
-    }
+    const data = await getMissionsByChapter(id)
+    setMissions(data)
   }
 
   const handleCreateMission = async (e) => {
     e.preventDefault()
 
-    try {
+    await createMission({
+      title,
+      chapterId: id
+    })
 
-      await createMission({
-        title,
-        chapterId: id
-      })
-
-      setTitle("")
-      loadMissions()
-
-    } catch (error) {
-      console.error("Error creando misión", error)
-    }
+    setTitle("")
+    loadMissions()
   }
 
   return (
@@ -46,8 +36,6 @@ function ChapterDetailPage() {
     <div style={{ padding: "30px" }}>
 
       <h1>Mapas de misión</h1>
-
-      <h2>Crear nuevo mapa</h2>
 
       <form onSubmit={handleCreateMission}>
 
@@ -66,8 +54,6 @@ function ChapterDetailPage() {
       </form>
 
       <hr />
-
-      <h2>Mapas</h2>
 
       {missions.map(mission => (
 

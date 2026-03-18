@@ -18,12 +18,7 @@ function App() {
 
           <Route
             path="/"
-            element={
-              <div>
-                <h1>Mapa de Misiones</h1>
-                <MissionMap />
-              </div>
-            }
+            element={<CoursesPage />}
           />
 
           <Route
@@ -39,6 +34,11 @@ function App() {
           <Route
             path="/chapters/:id"
             element={<ChapterDetailPage />}
+          />
+
+          <Route
+            path="/mission/:missionId"
+            element={<MissionMap />}
           />
 
         </Routes>

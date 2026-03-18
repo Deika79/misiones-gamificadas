@@ -28,6 +28,16 @@ const MissionSchema = new mongoose.Schema({
     default: "Profesor"
   },
 
+  nodes: {
+    type: Array,
+    default: []
+  },
+
+  edges: {
+    type: Array,
+    default: []
+  },
+
   createdAt: {
     type: Date,
     default: Date.now
