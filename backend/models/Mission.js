@@ -2,6 +2,12 @@ const mongoose = require("mongoose")
 
 const MissionSchema = new mongoose.Schema({
 
+  chapterId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "Chapter",
+    required: false
+  },
+
   title: {
     type: String,
     required: true
