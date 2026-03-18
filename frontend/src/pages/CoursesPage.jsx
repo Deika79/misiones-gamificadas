@@ -1,7 +1,10 @@
 import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { getCourses, createCourse } from "../api/courseService"
 
 function CoursesPage() {
+
+  const navigate = useNavigate()
 
   const [courses, setCourses] = useState([])
   const [title, setTitle] = useState("")
@@ -32,7 +35,6 @@ function CoursesPage() {
 
       setTitle("")
       setDescription("")
-
       loadCourses()
 
     } catch (error) {
@@ -50,23 +52,19 @@ function CoursesPage() {
 
       <form onSubmit={handleCreateCourse}>
 
-        <div>
-          <input
-            type="text"
-            placeholder="Título del curso"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
-        </div>
+        <input
+          type="text"
+          placeholder="Título del curso"
+          value={title}
+          onChange={(e) => setTitle(e.target.value)}
+          required
+        />
 
-        <div>
-          <textarea
-            placeholder="Descripción"
-            value={description}
-            onChange={(e) => setDescription(e.target.value)}
-          />
-        </div>
+        <textarea
+          placeholder="Descripción"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+        />
 
         <button type="submit">
           Crear curso
@@ -77,8 +75,6 @@ function CoursesPage() {
       <hr />
 
       <h2>Lista de cursos</h2>
-
-      {courses.length === 0 && <p>No hay cursos aún</p>}
 
       {courses.map(course => (
 
@@ -92,8 +88,13 @@ function CoursesPage() {
         >
 
           <h3>{course.title}</h3>
-
           <p>{course.description}</p>
+
+          <button
+            onClick={() => navigate(`/courses/${course._id}`)}
+          >
+            Entrar al curso
+          </button>
 
         </div>
 
