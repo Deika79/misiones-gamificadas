@@ -5,14 +5,19 @@ import TaskList from "./TaskList"
 function NodeEditor({ node, onUpdate, onDelete }) {
 
   const [title, setTitle] = useState("")
-  const [type, setType] = useState("")
+  const [type, setType] = useState("city")
   const [description, setDescription] = useState("")
+  const [loading, setLoading] = useState(false)
+
+  // =============================
+  // CARGAR DATOS DEL NODO
+  // =============================
 
   useEffect(() => {
 
     if (node) {
 
-      setTitle(node.data.label)
+      setTitle(node.data.label || "")
       setType(node.data.type || "city")
       setDescription(node.data.description || "")
 
@@ -24,36 +29,72 @@ function NodeEditor({ node, onUpdate, onDelete }) {
 
     return (
       <div style={{ padding: "20px" }}>
-        Selecciona un nodo
+        <h3>Editor de Nodo</h3>
+        Selecciona un nodo en el mapa
       </div>
     )
 
   }
 
+  // =============================
+  // GUARDAR NODO
+  // =============================
+
   const save = async () => {
 
-    const res = await axios.put(
-      `http://localhost:5000/nodes/${node.id}`,
-      {
-        title,
-        type,
-        description
-      }
-    )
+    if (!title.trim()) {
+      alert("El nodo debe tener un nombre")
+      return
+    }
 
-    onUpdate(res.data)
+    try {
+
+      setLoading(true)
+
+      const res = await axios.put(
+        `http://localhost:5000/nodes/${node.id}`,
+        {
+          title,
+          type,
+          description
+        }
+      )
+
+      onUpdate(res.data)
+
+    } catch (error) {
+
+      console.error("Error actualizando nodo:", error)
+
+    } finally {
+
+      setLoading(false)
+
+    }
 
   }
 
+  // =============================
+  // ELIMINAR NODO
+  // =============================
+
   const deleteNode = async () => {
 
-    if (!window.confirm("¿Eliminar nodo?")) return
+    if (!window.confirm("¿Eliminar nodo? Esta acción no se puede deshacer.")) return
 
-    await axios.delete(
-      `http://localhost:5000/nodes/${node.id}`
-    )
+    try {
 
-    onDelete(node.id)
+      await axios.delete(
+        `http://localhost:5000/nodes/${node.id}`
+      )
+
+      onDelete(node.id)
+
+    } catch (error) {
+
+      console.error("Error eliminando nodo:", error)
+
+    }
 
   }
 
@@ -63,9 +104,14 @@ function NodeEditor({ node, onUpdate, onDelete }) {
 
       <h3>Editor de Nodo</h3>
 
-      <div>
-        Nombre
+      {/* =============================
+      DATOS DEL NODO
+      ============================= */}
+
+      <div style={{ marginBottom: "10px" }}>
+        <label>Nombre</label>
         <input
+          style={{ width: "100%" }}
           value={title}
           onChange={(e) =>
             setTitle(e.target.value)
@@ -73,9 +119,10 @@ function NodeEditor({ node, onUpdate, onDelete }) {
         />
       </div>
 
-      <div>
-        Tipo
+      <div style={{ marginBottom: "10px" }}>
+        <label>Tipo</label>
         <select
+          style={{ width: "100%" }}
           value={type}
           onChange={(e) =>
             setType(e.target.value)
@@ -91,9 +138,11 @@ function NodeEditor({ node, onUpdate, onDelete }) {
         </select>
       </div>
 
-      <div>
-        Descripción
+      <div style={{ marginBottom: "10px" }}>
+        <label>Descripción</label>
         <textarea
+          style={{ width: "100%" }}
+          rows="4"
           value={description}
           onChange={(e) =>
             setDescription(e.target.value)
@@ -101,21 +150,43 @@ function NodeEditor({ node, onUpdate, onDelete }) {
         />
       </div>
 
-      <button onClick={save}>
-        Guardar
+      <button
+        onClick={save}
+        disabled={loading}
+        style={{
+          width: "100%",
+          padding: "8px",
+          marginBottom: "10px"
+        }}
+      >
+        {loading ? "Guardando..." : "Guardar cambios"}
       </button>
 
       <hr />
 
+      {/* =============================
+      ELIMINAR NODO
+      ============================= */}
+
       <button
         onClick={deleteNode}
         style={{
+          width: "100%",
           background: "red",
-          color: "white"
+          color: "white",
+          padding: "8px"
         }}
       >
         Eliminar Nodo
       </button>
+
+      <hr />
+
+      {/* =============================
+      TAREAS DEL NODO
+      ============================= */}
+
+      <h4>Tareas de la misión</h4>
 
       <TaskList nodeId={node.id} />
 
