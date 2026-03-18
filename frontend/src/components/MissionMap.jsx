@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from "react"
+import React, { useEffect, useState, useCallback, useRef } from "react"
 import ReactFlow, {
   useNodesState,
   useEdgesState,
@@ -6,6 +6,8 @@ import ReactFlow, {
   useReactFlow,
   Controls
 } from "reactflow"
+
+import { useParams } from "react-router-dom"
 
 import "reactflow/dist/style.css"
 import axios from "axios"
@@ -19,13 +21,24 @@ const nodeTypes = {
 
 function MissionMap() {
 
-  const missionId = "69b7e9a930d53c9aceac26d1"
+  const { missionId } = useParams()
 
   const { screenToFlowPosition } = useReactFlow()
 
   const [nodes, setNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
   const [selectedNode, setSelectedNode] = useState(null)
+
+  const lastSaved = useRef({
+    nodes: [],
+    edges: []
+  })
+
+  const saveTimeout = useRef(null)
+
+  // =========================
+  // CARGAR MAPA
+  // =========================
 
   useEffect(() => {
 
@@ -70,11 +83,63 @@ function MissionMap() {
       setNodes(formattedNodes)
       setEdges(formattedEdges)
 
+      lastSaved.current = {
+        nodes: formattedNodes,
+        edges: formattedEdges
+      }
+
     }
 
     loadNodes()
 
-  }, [])
+  }, [missionId])
+
+  // =========================
+  // AUTOSAVE INTELIGENTE
+  // =========================
+
+  useEffect(() => {
+
+    if (saveTimeout.current) {
+      clearTimeout(saveTimeout.current)
+    }
+
+    saveTimeout.current = setTimeout(async () => {
+
+      const current = JSON.stringify({ nodes, edges })
+      const previous = JSON.stringify(lastSaved.current)
+
+      if (current !== previous) {
+
+        try {
+
+          await axios.put(
+            `http://localhost:5000/missions/${missionId}`,
+            {
+              nodes,
+              edges
+            }
+          )
+
+          lastSaved.current = { nodes, edges }
+
+          console.log("Mapa guardado automáticamente")
+
+        } catch (error) {
+
+          console.error("Error guardando mapa:", error)
+
+        }
+
+      }
+
+    }, 2000)
+
+  }, [nodes, edges, missionId])
+
+  // =========================
+  // CREAR NODO
+  // =========================
 
   const onPaneClick = useCallback(async (event) => {
 
@@ -113,11 +178,19 @@ function MissionMap() {
 
     setNodes((nds) => [...nds, newNode])
 
-  }, [screenToFlowPosition])
+  }, [screenToFlowPosition, missionId])
+
+  // =========================
+  // CLICK NODO
+  // =========================
 
   const onNodeClick = (event, node) => {
     setSelectedNode(node)
   }
+
+  // =========================
+  // DRAG NODO
+  // =========================
 
   const onNodeDragStop = async (event, node) => {
 
@@ -129,6 +202,10 @@ function MissionMap() {
     )
 
   }
+
+  // =========================
+  // CONECTAR NODOS
+  // =========================
 
   const onConnect = useCallback(async (params) => {
 
