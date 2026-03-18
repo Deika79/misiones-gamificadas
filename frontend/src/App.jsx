@@ -4,6 +4,7 @@ import { ReactFlowProvider } from "reactflow"
 import MissionMap from "./components/MissionMap"
 import CoursesPage from "./pages/CoursesPage"
 import CourseDetailPage from "./pages/CourseDetailPage"
+import ChapterDetailPage from "./pages/ChapterDetailPage"
 
 function App() {
 
@@ -33,6 +34,11 @@ function App() {
           <Route
             path="/courses/:id"
             element={<CourseDetailPage />}
+          />
+
+          <Route
+            path="/chapters/:id"
+            element={<ChapterDetailPage />}
           />
 
         </Routes>

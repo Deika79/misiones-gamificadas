@@ -1,15 +1,15 @@
 import { useEffect, useState } from "react"
-import { useParams } from "react-router-dom"
+import { useParams, useNavigate } from "react-router-dom"
 import { getCourse } from "../api/courseService"
 import { getChaptersByCourse, createChapter } from "../api/chapterService"
 
 function CourseDetailPage() {
 
   const { id } = useParams()
+  const navigate = useNavigate()
 
   const [course, setCourse] = useState(null)
   const [chapters, setChapters] = useState([])
-
   const [title, setTitle] = useState("")
 
   useEffect(() => {
@@ -18,42 +18,28 @@ function CourseDetailPage() {
   }, [])
 
   const loadCourse = async () => {
-    try {
-      const data = await getCourse(id)
-      setCourse(data)
-    } catch (error) {
-      console.error("Error cargando curso", error)
-    }
+    const data = await getCourse(id)
+    setCourse(data)
   }
 
   const loadChapters = async () => {
-    try {
-      const data = await getChaptersByCourse(id)
-      setChapters(data)
-    } catch (error) {
-      console.error("Error cargando capítulos", error)
-    }
+    const data = await getChaptersByCourse(id)
+    setChapters(data)
   }
 
   const handleCreateChapter = async (e) => {
     e.preventDefault()
 
-    try {
+    await createChapter({
+      title,
+      courseId: id
+    })
 
-      await createChapter({
-        title,
-        courseId: id
-      })
-
-      setTitle("")
-      loadChapters()
-
-    } catch (error) {
-      console.error("Error creando capítulo", error)
-    }
+    setTitle("")
+    loadChapters()
   }
 
-  if (!course) return <p>Cargando curso...</p>
+  if (!course) return <p>Cargando...</p>
 
   return (
 
@@ -86,8 +72,6 @@ function CourseDetailPage() {
 
       <h2>Capítulos</h2>
 
-      {chapters.length === 0 && <p>No hay capítulos aún</p>}
-
       {chapters.map(chapter => (
 
         <div
@@ -100,6 +84,12 @@ function CourseDetailPage() {
         >
 
           <h3>{chapter.title}</h3>
+
+          <button
+            onClick={() => navigate(`/chapters/${chapter._id}`)}
+          >
+            Ver mapas
+          </button>
 
         </div>
 
