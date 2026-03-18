@@ -3,8 +3,9 @@ const router = express.Router()
 
 const Task = require("../models/Task")
 
-
-// Obtener tareas de un nodo
+// ============================================
+// OBTENER TODAS LAS TAREAS DE UN NODO
+// ============================================
 
 router.get("/node/:nodeId", async (req, res) => {
 
@@ -12,7 +13,7 @@ router.get("/node/:nodeId", async (req, res) => {
 
     const tasks = await Task.find({
       nodeId: req.params.nodeId
-    })
+    }).sort({ order: 1 })
 
     res.json(tasks)
 
@@ -25,13 +26,19 @@ router.get("/node/:nodeId", async (req, res) => {
 })
 
 
-// Obtener una tarea
+// ============================================
+// OBTENER UNA TAREA
+// ============================================
 
 router.get("/:id", async (req, res) => {
 
   try {
 
     const task = await Task.findById(req.params.id)
+
+    if (!task) {
+      return res.status(404).json({ message: "Task not found" })
+    }
 
     res.json(task)
 
@@ -44,13 +51,32 @@ router.get("/:id", async (req, res) => {
 })
 
 
-// Crear tarea
+// ============================================
+// CREAR TAREA
+// ============================================
 
 router.post("/", async (req, res) => {
 
   try {
 
-    const task = new Task(req.body)
+    const { nodeId } = req.body
+
+    if (!nodeId) {
+      return res.status(400).json({
+        message: "nodeId is required"
+      })
+    }
+
+    // calcular orden automáticamente
+    const lastTask = await Task.findOne({ nodeId })
+      .sort({ order: -1 })
+
+    const nextOrder = lastTask ? lastTask.order + 1 : 0
+
+    const task = new Task({
+      ...req.body,
+      order: nextOrder
+    })
 
     const savedTask = await task.save()
 
@@ -65,7 +91,9 @@ router.post("/", async (req, res) => {
 })
 
 
-// Actualizar tarea
+// ============================================
+// ACTUALIZAR TAREA
+// ============================================
 
 router.put("/:id", async (req, res) => {
 
@@ -76,6 +104,12 @@ router.put("/:id", async (req, res) => {
       req.body,
       { new: true }
     )
+
+    if (!updatedTask) {
+      return res.status(404).json({
+        message: "Task not found"
+      })
+    }
 
     res.json(updatedTask)
 
@@ -88,16 +122,24 @@ router.put("/:id", async (req, res) => {
 })
 
 
-// Eliminar tarea
+// ============================================
+// ELIMINAR TAREA
+// ============================================
 
 router.delete("/:id", async (req, res) => {
 
   try {
 
-    await Task.findByIdAndDelete(req.params.id)
+    const deleted = await Task.findByIdAndDelete(req.params.id)
+
+    if (!deleted) {
+      return res.status(404).json({
+        message: "Task not found"
+      })
+    }
 
     res.json({
-      message: "Tarea eliminada"
+      message: "Task deleted successfully"
     })
 
   } catch (error) {
