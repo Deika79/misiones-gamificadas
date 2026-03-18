@@ -41,6 +41,14 @@ const NodeSchema = new mongoose.Schema({
     }
   ],
 
+  // 🔓 NUEVO: nodos necesarios para desbloquear este
+  requiredNodes: [
+    {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Node"
+    }
+  ],
+
   createdAt: {
     type: Date,
     default: Date.now
