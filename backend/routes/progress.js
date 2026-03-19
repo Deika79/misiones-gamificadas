@@ -11,16 +11,28 @@ router.get("/mission/:missionId/:userId", async (req, res) => {
 
   try {
 
-    const { userId } = req.params
+    const { userId, missionId } = req.params
 
     const progress = await Progress.find({ userId })
 
     const totalXP = progress.reduce((sum, p) => sum + (p.xpEarned || 0), 0)
 
+    const completedNodes = progress.length
+
+    // contar nodos totales de la misión
+    const Node = require("../models/Node")
+
+    const totalNodes = await Node.countDocuments({ missionId })
+
+    const progressPercentage = totalNodes === 0
+      ? 0
+      : Math.round((completedNodes / totalNodes) * 100)
+
     res.json({
-      progress,
       totalXP,
-      completedNodes: progress.length
+      completedNodes,
+      totalNodes,
+      progressPercentage
     })
 
   } catch (error) {
@@ -30,7 +42,6 @@ router.get("/mission/:missionId/:userId", async (req, res) => {
   }
 
 })
-
 
 // ========================================
 // COMPLETAR NODO
