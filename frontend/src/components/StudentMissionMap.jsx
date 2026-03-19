@@ -9,6 +9,8 @@ import { useParams } from "react-router-dom"
 
 import axios from "axios"
 
+import TaskPlayer from "./TaskPlayer"
+
 import "reactflow/dist/style.css"
 
 function StudentMissionMap() {
@@ -23,13 +25,15 @@ function StudentMissionMap() {
 
   const [xp, setXp] = useState(0)
 
+  const [activeNode, setActiveNode] = useState(null)
+
   // =========================
-  // CARGAR MAPA DEL ALUMNO
+  // CARGAR MAPA + XP
   // =========================
 
-  useEffect(() => {
+  const loadMission = async () => {
 
-    const loadMission = async () => {
+    try {
 
       const res = await axios.get(
         `http://localhost:5000/missions/${missionId}/student/${userId}`
@@ -37,16 +41,11 @@ function StudentMissionMap() {
 
       const formattedNodes = res.data.nodes.map(node => {
 
-        let emoji = "🔒"
-
-        if (node.status === "available") emoji = "🟢"
-        if (node.status === "completed") emoji = "⭐"
-
         return {
           id: node.id,
           position: node.position,
           data: {
-            label: `${emoji} ${node.title}`,
+            label: node.title,
             status: node.status
           },
           draggable: false
@@ -66,11 +65,24 @@ function StudentMissionMap() {
       setNodes(formattedNodes)
       setEdges(formattedEdges)
 
+      // cargar XP
+      const progressRes = await axios.get(
+        `http://localhost:5000/progress/mission/${missionId}/${userId}`
+      )
+
+      setXp(progressRes.data.totalXP || 0)
+
+    } catch (error) {
+
+      console.error("Error cargando misión:", error)
+
     }
 
-    loadMission()
+  }
 
-  }, [missionId, userId])
+  useEffect(() => {
+    loadMission()
+  }, [missionId])
 
   // =========================
   // CLICK EN NODO
@@ -89,15 +101,15 @@ function StudentMissionMap() {
 
     if (status === "available") {
 
-      alert("Aquí se abrirá la misión")
-
-      // más adelante abriremos las TASKS
+      setActiveNode(node.id)
+      return
 
     }
 
     if (status === "completed") {
 
       alert("Nodo completado ⭐")
+      return
 
     }
 
@@ -151,6 +163,22 @@ function StudentMissionMap() {
         </ReactFlow>
 
       </div>
+
+      {/* TASK PLAYER */}
+
+      {activeNode && (
+
+        <TaskPlayer
+          nodeId={activeNode}
+          userId={userId}
+          onClose={() => setActiveNode(null)}
+          onCompleted={() => {
+            setActiveNode(null)
+            loadMission()
+          }}
+        />
+
+      )}
 
     </div>
 
