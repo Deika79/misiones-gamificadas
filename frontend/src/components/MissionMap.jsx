@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback, useRef } from "react"
+import React, { useEffect, useState, useCallback, useRef } from "react";
 import ReactFlow, {
   useNodesState,
   useEdgesState,
@@ -6,37 +6,40 @@ import ReactFlow, {
   useReactFlow,
   Controls,
   ReactFlowProvider
-} from "reactflow"
+} from "reactflow";
 
-import { useParams } from "react-router-dom"
+import { useParams } from "react-router-dom";
 
-import "reactflow/dist/style.css"
-import { useAxios } from "../api/axiosInstance"
+import "reactflow/dist/style.css";
+import { useAxios } from "../api/axiosInstance";
 
-import MapNode from "./MapNode"
-import NodeEditor from "./NodeEditor"
+import MapNode from "./MapNode";
+import NodeEditor from "./NodeEditor";
 
 const nodeTypes = {
   mapNode: MapNode
-}
-const axios = useAxios();
+};
 
-// 👇 COMPONENTE INTERNO (el real)
+// =========================
+// COMPONENTE INTERNO
+// =========================
 function MissionMapInner() {
 
-  const { missionId } = useParams()
-  const { screenToFlowPosition } = useReactFlow()
+  const axios = useAxios(); // ✅ HOOK BIEN COLOCADO
 
-  const [nodes, setNodes, onNodesChange] = useNodesState([])
-  const [edges, setEdges, onEdgesChange] = useEdgesState([])
-  const [selectedNode, setSelectedNode] = useState(null)
+  const { missionId } = useParams();
+  const { screenToFlowPosition } = useReactFlow();
+
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const [selectedNode, setSelectedNode] = useState(null);
 
   const lastSaved = useRef({
     nodes: [],
     edges: []
-  })
+  });
 
-  const saveTimeout = useRef(null)
+  const saveTimeout = useRef(null);
 
   // =========================
   // CARGAR MAPA
@@ -46,9 +49,7 @@ function MissionMapInner() {
 
     const loadNodes = async () => {
       try {
-        const res = await axios.get(
-          `http://localhost:5000/nodes/${missionId}`
-        )
+        const res = await axios.get(`/nodes/${missionId}`);
 
         const formattedNodes = res.data.map(node => ({
           id: node._id,
@@ -59,9 +60,9 @@ function MissionMapInner() {
             type: node.type || "city",
             description: node.description || ""
           }
-        }))
+        }));
 
-        const formattedEdges = []
+        const formattedEdges = [];
 
         res.data.forEach(node => {
           node.connections?.forEach(target => {
@@ -74,28 +75,28 @@ function MissionMapInner() {
                 stroke: "#000",
                 strokeWidth: 3
               }
-            })
-          })
-        })
+            });
+          });
+        });
 
-        setNodes(formattedNodes)
-        setEdges(formattedEdges)
+        setNodes(formattedNodes);
+        setEdges(formattedEdges);
 
         lastSaved.current = {
           nodes: formattedNodes,
           edges: formattedEdges
-        }
+        };
 
       } catch (error) {
-        console.error("Error cargando nodos:", error)
+        console.error("Error cargando nodos:", error);
       }
-    }
+    };
 
     if (missionId) {
-      loadNodes()
+      loadNodes();
     }
 
-  }, [missionId])
+  }, [missionId]);
 
   // =========================
   // AUTOSAVE
@@ -104,33 +105,33 @@ function MissionMapInner() {
   useEffect(() => {
 
     if (saveTimeout.current) {
-      clearTimeout(saveTimeout.current)
+      clearTimeout(saveTimeout.current);
     }
 
     saveTimeout.current = setTimeout(async () => {
 
-      const current = JSON.stringify({ nodes, edges })
-      const previous = JSON.stringify(lastSaved.current)
+      const current = JSON.stringify({ nodes, edges });
+      const previous = JSON.stringify(lastSaved.current);
 
       if (current !== previous) {
         try {
-          await axios.put(
-            `http://localhost:5000/missions/${missionId}`,
-            { nodes, edges }
-          )
+          await axios.put(`/missions/${missionId}`, {
+            nodes,
+            edges
+          });
 
-          lastSaved.current = { nodes, edges }
+          lastSaved.current = { nodes, edges };
 
-          console.log("Mapa guardado automáticamente")
+          console.log("Mapa guardado automáticamente");
 
         } catch (error) {
-          console.error("Error guardando mapa:", error)
+          console.error("Error guardando mapa:", error);
         }
       }
 
-    }, 2000)
+    }, 2000);
 
-  }, [nodes, edges, missionId])
+  }, [nodes, edges, missionId]);
 
   // =========================
   // CREAR NODO
@@ -141,50 +142,67 @@ function MissionMapInner() {
     const position = screenToFlowPosition({
       x: event.clientX,
       y: event.clientY
-    })
+    });
 
-    const title = prompt("Nombre del nodo:", "Nuevo Nodo")
-    if (!title) return
+    const title = prompt("Nombre del nodo:", "Nuevo Nodo");
+    if (!title) return;
 
     const type = prompt(
       "Tipo de nodo: city, castle, dungeon, forest, mountain",
       "city"
-    )
+    );
 
-    const res = await axios.post(
-      "http://localhost:5000/nodes",
-      {
+    try {
+      const res = await axios.post("/nodes", {
         missionId,
         title,
         type,
         position
-      }
-    )
+      });
 
-    const newNode = {
-      id: res.data._id,
-      type: "mapNode",
-      position: res.data.position,
-      data: {
-        label: res.data.title,
-        type: res.data.type || "city"
-      }
+      const newNode = {
+        id: res.data._id,
+        type: "mapNode",
+        position: res.data.position,
+        data: {
+          label: res.data.title,
+          type: res.data.type || "city"
+        }
+      };
+
+      setNodes((nds) => [...nds, newNode]);
+
+    } catch (error) {
+      console.error("Error creando nodo:", error);
     }
 
-    setNodes((nds) => [...nds, newNode])
+  }, [screenToFlowPosition, missionId]);
 
-  }, [screenToFlowPosition, missionId])
+  // =========================
+  // CLICK NODO
+  // =========================
 
   const onNodeClick = (event, node) => {
-    setSelectedNode(node)
-  }
+    setSelectedNode(node);
+  };
+
+  // =========================
+  // DRAG NODO
+  // =========================
 
   const onNodeDragStop = async (event, node) => {
-    await axios.put(
-      `http://localhost:5000/nodes/${node.id}`,
-      { position: node.position }
-    )
-  }
+    try {
+      await axios.put(`/nodes/${node.id}`, {
+        position: node.position
+      });
+    } catch (error) {
+      console.error("Error moviendo nodo:", error);
+    }
+  };
+
+  // =========================
+  // CONECTAR NODOS
+  // =========================
 
   const onConnect = useCallback(async (params) => {
 
@@ -200,17 +218,22 @@ function MissionMapInner() {
         },
         eds
       )
-    )
+    );
 
-    await axios.post(
-      "http://localhost:5000/nodes/connect",
-      {
+    try {
+      await axios.post("/nodes/connect", {
         source: params.source,
         target: params.target
-      }
-    )
+      });
+    } catch (error) {
+      console.error("Error conectando nodos:", error);
+    }
 
-  }, [])
+  }, []);
+
+  // =========================
+  // RENDER
+  // =========================
 
   return (
     <div style={{ display: "flex", height: "600px" }}>
@@ -263,28 +286,35 @@ function MissionMapInner() {
                     }
                   : n
               )
-            )
+            );
           }}
           onDelete={(nodeId) => {
-            setNodes((nds) => nds.filter((n) => n.id !== nodeId))
+            setNodes((nds) => nds.filter((n) => n.id !== nodeId));
+
             setEdges((eds) =>
               eds.filter(
-                (e) => e.source !== nodeId && e.target !== nodeId
+                (e) =>
+                  e.source !== nodeId &&
+                  e.target !== nodeId
               )
-            )
-            setSelectedNode(null)
+            );
+
+            setSelectedNode(null);
           }}
         />
       </div>
     </div>
-  )
+  );
 }
 
-// 👇 EXPORT FINAL (ENVUELTO)
+// =========================
+// EXPORT FINAL
+// =========================
+
 export default function MissionMap() {
   return (
     <ReactFlowProvider>
       <MissionMapInner />
     </ReactFlowProvider>
-  )
+  );
 }

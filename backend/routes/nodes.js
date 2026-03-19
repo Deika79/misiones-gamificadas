@@ -1,52 +1,68 @@
-const express = require("express")
-const router = express.Router()
+const express = require("express");
+const router = express.Router();
 
-const Node = require("../models/Node")
+const Node = require("../models/Node");
 
-// Obtener nodos de una misión
+// 🔐 MIDDLEWARE AUTH
+const checkJwt = require("../middleware/authMiddleware");
+const getUser = require("../middleware/getUser");
+const syncUser = require("../middleware/syncUser");
 
+// 🔒 PROTEGER TODAS LAS RUTAS
+router.use(checkJwt, getUser, syncUser);
+
+// =========================
+// OBTENER NODOS DE UNA MISIÓN
+// =========================
 router.get("/:missionId", async (req, res) => {
 
   try {
 
     const nodes = await Node.find({
       missionId: req.params.missionId
-    })
+    });
 
-    res.json(nodes)
+    res.json(nodes);
 
   } catch (error) {
 
-    res.status(500).json({ error: error.message })
+    console.error("Error getting nodes:", error);
+    res.status(500).json({ error: error.message });
 
   }
 
-})
+});
 
 
-// Crear nodo
-
+// =========================
+// CREAR NODO
+// =========================
 router.post("/", async (req, res) => {
 
   try {
 
-    const node = new Node(req.body)
+    const node = new Node({
+      ...req.body,
+      connections: req.body.connections || []
+    });
 
-    const savedNode = await node.save()
+    const savedNode = await node.save();
 
-    res.json(savedNode)
+    res.json(savedNode);
 
   } catch (error) {
 
-    res.status(500).json({ error: error.message })
+    console.error("Error creating node:", error);
+    res.status(500).json({ error: error.message });
 
   }
 
-})
+});
 
 
-// Actualizar nodo
-
+// =========================
+// ACTUALIZAR NODO
+// =========================
 router.put("/:id", async (req, res) => {
 
   try {
@@ -55,98 +71,98 @@ router.put("/:id", async (req, res) => {
       req.params.id,
       req.body,
       { new: true }
-    )
+    );
 
-    res.json(updatedNode)
+    res.json(updatedNode);
 
   } catch (error) {
 
-    res.status(500).json({ error: error.message })
+    console.error("Error updating node:", error);
+    res.status(500).json({ error: error.message });
 
   }
 
-})
+});
 
 
-// Borrar nodo
-
+// =========================
+// BORRAR NODO
+// =========================
 router.delete("/:id", async (req, res) => {
 
   try {
 
-    await Node.findByIdAndDelete(req.params.id)
+    await Node.findByIdAndDelete(req.params.id);
 
-    // quitar conexiones que apuntaban a este nodo
-
+    // 🔥 limpiar conexiones que apuntaban a este nodo
     await Node.updateMany(
-      {},
+      { connections: req.params.id },
       { $pull: { connections: req.params.id } }
-    )
+    );
 
     res.json({
       message: "Nodo eliminado correctamente"
-    })
+    });
 
   } catch (error) {
 
-    res.status(500).json({ error: error.message })
+    console.error("Error deleting node:", error);
+    res.status(500).json({ error: error.message });
 
   }
 
-})
+});
 
 
-// Conectar nodos
-
+// =========================
+// CONECTAR NODOS
+// =========================
 router.post("/connect", async (req, res) => {
 
   try {
 
-    const { source, target } = req.body
+    const { source, target } = req.body;
 
-    const node = await Node.findById(source)
+    await Node.findByIdAndUpdate(source, {
+      $addToSet: { connections: target } // evita duplicados
+    });
 
-    if (!node.connections.includes(target)) {
-
-      node.connections.push(target)
-
-      await node.save()
-
-    }
-
-    res.json({ message: "Conexión guardada" })
+    res.json({ message: "Conexión guardada" });
 
   } catch (error) {
 
-    res.status(500).json({ error: error.message })
+    console.error("Error connecting nodes:", error);
+    res.status(500).json({ error: error.message });
 
   }
 
-})
+});
 
 
-// Desconectar nodos
-
+// =========================
+// DESCONECTAR NODOS
+// =========================
 router.post("/disconnect", async (req, res) => {
 
   try {
 
-    const { source, target } = req.body
+    const { source, target } = req.body;
 
     await Node.findByIdAndUpdate(source, {
       $pull: { connections: target }
-    })
+    });
 
     res.json({
       message: "Conexión eliminada"
-    })
+    });
 
   } catch (error) {
 
-    res.status(500).json({ error: error.message })
+    console.error("Error disconnecting nodes:", error);
+    res.status(500).json({ error: error.message });
 
   }
 
-})
+});
 
-module.exports = router
+module.exports = router;

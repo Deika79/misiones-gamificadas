@@ -17,3 +17,11 @@ ReactDOM.createRoot(document.getElementById("root")).render(
     </Auth0Provider>
   </React.StrictMode>
 );
+<Auth0Provider
+  domain="dev-hqumeedij6hm8jio.us.auth0.com"
+  clientId="1jJgXJAN9YHNjRwCAcsKJoEOR31151qT"
+  authorizationParams={{
+    redirect_uri: window.location.origin,
+    audience: "https://misiones-api"
+  }}
+></Auth0Provider>
