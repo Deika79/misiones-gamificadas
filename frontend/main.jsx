@@ -10,7 +10,8 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       domain="dev-hqumeedij6hm8jio.us.auth0.com"
       clientId="1jJgXJAN9YHNjRwCAcsKJoEOR31151qT"
       authorizationParams={{
-        redirect_uri: window.location.origin
+        redirect_uri: window.location.origin,
+        audience: "https://misiones-api",
       }}
     >
       <App />

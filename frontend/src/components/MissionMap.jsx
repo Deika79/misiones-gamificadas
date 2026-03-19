@@ -4,13 +4,14 @@ import ReactFlow, {
   useEdgesState,
   addEdge,
   useReactFlow,
-  Controls
+  Controls,
+  ReactFlowProvider
 } from "reactflow"
 
 import { useParams } from "react-router-dom"
 
 import "reactflow/dist/style.css"
-import axios from "axios"
+import { useAxios } from "../api/axiosInstance"
 
 import MapNode from "./MapNode"
 import NodeEditor from "./NodeEditor"
@@ -18,11 +19,12 @@ import NodeEditor from "./NodeEditor"
 const nodeTypes = {
   mapNode: MapNode
 }
+const axios = useAxios();
 
-function MissionMap() {
+// 👇 COMPONENTE INTERNO (el real)
+function MissionMapInner() {
 
   const { missionId } = useParams()
-
   const { screenToFlowPosition } = useReactFlow()
 
   const [nodes, setNodes, onNodesChange] = useNodesState([])
@@ -43,59 +45,60 @@ function MissionMap() {
   useEffect(() => {
 
     const loadNodes = async () => {
+      try {
+        const res = await axios.get(
+          `http://localhost:5000/nodes/${missionId}`
+        )
 
-      const res = await axios.get(
-        `http://localhost:5000/nodes/${missionId}`
-      )
+        const formattedNodes = res.data.map(node => ({
+          id: node._id,
+          type: "mapNode",
+          position: node.position,
+          data: {
+            label: node.title,
+            type: node.type || "city",
+            description: node.description || ""
+          }
+        }))
 
-      const formattedNodes = res.data.map(node => ({
-        id: node._id,
-        type: "mapNode",
-        position: node.position,
-        data: {
-          label: node.title,
-          type: node.type || "city",
-          description: node.description || ""
-        }
-      }))
+        const formattedEdges = []
 
-      const formattedEdges = []
-
-      res.data.forEach(node => {
-
-        node.connections?.forEach(target => {
-
-          formattedEdges.push({
-            id: `${node._id}-${target}`,
-            source: node._id,
-            target: target,
-            type: "smoothstep",
-            style: {
-              stroke: "#000",
-              strokeWidth: 3
-            }
+        res.data.forEach(node => {
+          node.connections?.forEach(target => {
+            formattedEdges.push({
+              id: `${node._id}-${target}`,
+              source: node._id,
+              target: target,
+              type: "smoothstep",
+              style: {
+                stroke: "#000",
+                strokeWidth: 3
+              }
+            })
           })
-
         })
 
-      })
+        setNodes(formattedNodes)
+        setEdges(formattedEdges)
 
-      setNodes(formattedNodes)
-      setEdges(formattedEdges)
+        lastSaved.current = {
+          nodes: formattedNodes,
+          edges: formattedEdges
+        }
 
-      lastSaved.current = {
-        nodes: formattedNodes,
-        edges: formattedEdges
+      } catch (error) {
+        console.error("Error cargando nodos:", error)
       }
-
     }
 
-    loadNodes()
+    if (missionId) {
+      loadNodes()
+    }
 
   }, [missionId])
 
   // =========================
-  // AUTOSAVE INTELIGENTE
+  // AUTOSAVE
   // =========================
 
   useEffect(() => {
@@ -110,15 +113,10 @@ function MissionMap() {
       const previous = JSON.stringify(lastSaved.current)
 
       if (current !== previous) {
-
         try {
-
           await axios.put(
             `http://localhost:5000/missions/${missionId}`,
-            {
-              nodes,
-              edges
-            }
+            { nodes, edges }
           )
 
           lastSaved.current = { nodes, edges }
@@ -126,11 +124,8 @@ function MissionMap() {
           console.log("Mapa guardado automáticamente")
 
         } catch (error) {
-
           console.error("Error guardando mapa:", error)
-
         }
-
       }
 
     }, 2000)
@@ -180,32 +175,16 @@ function MissionMap() {
 
   }, [screenToFlowPosition, missionId])
 
-  // =========================
-  // CLICK NODO
-  // =========================
-
   const onNodeClick = (event, node) => {
     setSelectedNode(node)
   }
 
-  // =========================
-  // DRAG NODO
-  // =========================
-
   const onNodeDragStop = async (event, node) => {
-
     await axios.put(
       `http://localhost:5000/nodes/${node.id}`,
-      {
-        position: node.position
-      }
+      { position: node.position }
     )
-
   }
-
-  // =========================
-  // CONECTAR NODOS
-  // =========================
 
   const onConnect = useCallback(async (params) => {
 
@@ -234,7 +213,6 @@ function MissionMap() {
   }, [])
 
   return (
-
     <div style={{ display: "flex", height: "600px" }}>
 
       <div
@@ -245,31 +223,20 @@ function MissionMap() {
           backgroundPosition: "center"
         }}
       >
-
         <ReactFlow
           nodes={nodes}
           edges={edges}
           nodeTypes={nodeTypes}
-
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
           onPaneClick={onPaneClick}
           onNodeClick={onNodeClick}
           onNodeDragStop={onNodeDragStop}
           onConnect={onConnect}
-
-          zoomOnScroll={false}
-          zoomOnPinch={false}
-          panOnScroll={false}
-          panOnDrag={true}
-
           fitView
         >
-
           <Controls />
-
         </ReactFlow>
-
       </div>
 
       <div
@@ -279,11 +246,9 @@ function MissionMap() {
           background: "#f9f9f9"
         }}
       >
-
         <NodeEditor
           node={selectedNode}
           onUpdate={(updatedNode) => {
-
             setNodes((nds) =>
               nds.map((n) =>
                 n.id === updatedNode._id
@@ -299,33 +264,27 @@ function MissionMap() {
                   : n
               )
             )
-
           }}
           onDelete={(nodeId) => {
-
-            setNodes((nds) =>
-              nds.filter((n) => n.id !== nodeId)
-            )
-
+            setNodes((nds) => nds.filter((n) => n.id !== nodeId))
             setEdges((eds) =>
               eds.filter(
-                (e) =>
-                  e.source !== nodeId &&
-                  e.target !== nodeId
+                (e) => e.source !== nodeId && e.target !== nodeId
               )
             )
-
             setSelectedNode(null)
-
           }}
         />
-
       </div>
-
     </div>
-
   )
-
 }
 
-export default MissionMap
+// 👇 EXPORT FINAL (ENVUELTO)
+export default function MissionMap() {
+  return (
+    <ReactFlowProvider>
+      <MissionMapInner />
+    </ReactFlowProvider>
+  )
+}
