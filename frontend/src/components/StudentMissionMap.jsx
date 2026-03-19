@@ -17,18 +17,20 @@ function StudentMissionMap() {
 
   const { missionId } = useParams()
 
-  // TEMPORAL (luego vendrá de Auth0)
   const userId = "demoUser"
 
   const [nodes, setNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
 
   const [xp, setXp] = useState(0)
+  const [progress, setProgress] = useState(0)
+  const [completed, setCompleted] = useState(0)
+  const [total, setTotal] = useState(0)
 
   const [activeNode, setActiveNode] = useState(null)
 
   // =========================
-  // CARGAR MAPA + XP
+  // CARGAR TODO
   // =========================
 
   const loadMission = async () => {
@@ -39,19 +41,15 @@ function StudentMissionMap() {
         `http://localhost:5000/missions/${missionId}/student/${userId}`
       )
 
-      const formattedNodes = res.data.nodes.map(node => {
-
-        return {
-          id: node.id,
-          position: node.position,
-          data: {
-            label: node.title,
-            status: node.status
-          },
-          draggable: false
-        }
-
-      })
+      const formattedNodes = res.data.nodes.map(node => ({
+        id: node.id,
+        position: node.position,
+        data: {
+          label: node.title,
+          status: node.status
+        },
+        draggable: false
+      }))
 
       const formattedEdges = res.data.edges.map(edge => ({
         ...edge,
@@ -65,16 +63,19 @@ function StudentMissionMap() {
       setNodes(formattedNodes)
       setEdges(formattedEdges)
 
-      // cargar XP
+      // progreso
       const progressRes = await axios.get(
         `http://localhost:5000/progress/mission/${missionId}/${userId}`
       )
 
-      setXp(progressRes.data.totalXP || 0)
+      setXp(progressRes.data.totalXP)
+      setProgress(progressRes.data.progressPercentage)
+      setCompleted(progressRes.data.completedNodes)
+      setTotal(progressRes.data.totalNodes)
 
     } catch (error) {
 
-      console.error("Error cargando misión:", error)
+      console.error(error)
 
     }
 
@@ -85,7 +86,7 @@ function StudentMissionMap() {
   }, [missionId])
 
   // =========================
-  // CLICK EN NODO
+  // CLICK NODO
   // =========================
 
   const onNodeClick = (event, node) => {
@@ -93,24 +94,17 @@ function StudentMissionMap() {
     const status = node.data.status
 
     if (status === "locked") {
-
-      alert("Este nodo está bloqueado 🔒")
+      alert("Nodo bloqueado 🔒")
       return
-
     }
 
     if (status === "available") {
-
       setActiveNode(node.id)
       return
-
     }
 
     if (status === "completed") {
-
       alert("Nodo completado ⭐")
-      return
-
     }
 
   }
@@ -119,47 +113,59 @@ function StudentMissionMap() {
 
     <div style={{ height: "600px" }}>
 
+      {/* HEADER GAMIFICADO */}
+
       <div
         style={{
           padding: "10px",
-          background: "#222",
-          color: "white",
-          fontWeight: "bold"
+          background: "#111",
+          color: "white"
         }}
       >
 
-        XP total: {xp}
+        <div>XP: {xp}</div>
+
+        <div>
+          Progreso: {completed} / {total} ({progress}%)
+        </div>
+
+        <div
+          style={{
+            marginTop: "5px",
+            height: "10px",
+            background: "#444",
+            borderRadius: "5px"
+          }}
+        >
+          <div
+            style={{
+              width: `${progress}%`,
+              height: "100%",
+              background: "#2ecc71",
+              borderRadius: "5px"
+            }}
+          />
+        </div>
 
       </div>
 
+      {/* MAPA */}
+
       <div
         style={{
-          height: "560px",
+          height: "540px",
           backgroundImage: "url('/maps/map1.png')",
-          backgroundSize: "cover",
-          backgroundPosition: "center"
+          backgroundSize: "cover"
         }}
       >
 
         <ReactFlow
           nodes={nodes}
           edges={edges}
-
-          onNodesChange={onNodesChange}
-          onEdgesChange={onEdgesChange}
-
           onNodeClick={onNodeClick}
-
-          zoomOnScroll={false}
-          zoomOnPinch={false}
-          panOnScroll={false}
-          panOnDrag={true}
-
           fitView
         >
-
           <Controls />
-
         </ReactFlow>
 
       </div>
@@ -167,7 +173,6 @@ function StudentMissionMap() {
       {/* TASK PLAYER */}
 
       {activeNode && (
-
         <TaskPlayer
           nodeId={activeNode}
           userId={userId}
@@ -177,7 +182,6 @@ function StudentMissionMap() {
             loadMission()
           }}
         />
-
       )}
 
     </div>
