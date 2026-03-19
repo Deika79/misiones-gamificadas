@@ -8,31 +8,19 @@ function TaskPlayer({ nodeId, userId, onClose, onCompleted }) {
   const [answer, setAnswer] = useState("")
   const [loading, setLoading] = useState(true)
 
-  // ============================
-  // CARGAR TAREAS
-  // ============================
+  const [completed, setCompleted] = useState(false)
+  const [xpEarned, setXpEarned] = useState(0)
 
   useEffect(() => {
 
     const loadTasks = async () => {
 
-      try {
+      const res = await axios.get(
+        `http://localhost:5000/tasks/node/${nodeId}`
+      )
 
-        const res = await axios.get(
-          `http://localhost:5000/tasks/node/${nodeId}`
-        )
-
-        setTasks(res.data)
-
-      } catch (error) {
-
-        console.error("Error cargando tareas:", error)
-
-      } finally {
-
-        setLoading(false)
-
-      }
+      setTasks(res.data)
+      setLoading(false)
 
     }
 
@@ -40,45 +28,21 @@ function TaskPlayer({ nodeId, userId, onClose, onCompleted }) {
 
   }, [nodeId])
 
-  if (loading) {
-
-    return (
-      <div style={{ padding: "20px" }}>
-        Cargando misión...
-      </div>
-    )
-
-  }
-
-  if (tasks.length === 0) {
-
-    return (
-      <div style={{ padding: "20px" }}>
-        Este nodo no tiene tareas
-      </div>
-    )
-
-  }
+  if (loading) return <div style={{ padding: "20px" }}>Cargando...</div>
 
   const currentTask = tasks[currentTaskIndex]
 
-  // ============================
-  // COMPLETAR TAREA
-  // ============================
-
   const completeTask = async () => {
 
-    const isLastTask = currentTaskIndex === tasks.length - 1
+    const isLast = currentTaskIndex === tasks.length - 1
 
-    if (!isLastTask) {
+    if (!isLast) {
 
       setCurrentTaskIndex(currentTaskIndex + 1)
       setAnswer("")
       return
 
     }
-
-    // completar nodo
 
     try {
 
@@ -91,17 +55,19 @@ function TaskPlayer({ nodeId, userId, onClose, onCompleted }) {
         }
       )
 
-      alert("Nodo completado ⭐")
+      setXpEarned(currentTask.xpReward)
+      setCompleted(true)
 
-      if (onCompleted) {
-        onCompleted()
-      }
+      setTimeout(() => {
 
-      onClose()
+        if (onCompleted) onCompleted()
+        onClose()
+
+      }, 2000)
 
     } catch (error) {
 
-      console.error("Error completando nodo:", error)
+      console.error(error)
 
     }
 
@@ -109,74 +75,75 @@ function TaskPlayer({ nodeId, userId, onClose, onCompleted }) {
 
   return (
 
-    <div
-      style={{
-        position: "fixed",
-        top: 0,
-        left: 0,
-        width: "100%",
-        height: "100%",
-        background: "rgba(0,0,0,0.7)",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center"
-      }}
-    >
+    <div style={{
+      position: "fixed",
+      top: 0,
+      left: 0,
+      width: "100%",
+      height: "100%",
+      background: "rgba(0,0,0,0.7)",
+      display: "flex",
+      justifyContent: "center",
+      alignItems: "center"
+    }}>
 
-      <div
-        style={{
-          width: "500px",
-          background: "white",
-          padding: "25px",
-          borderRadius: "10px"
-        }}
-      >
+      <div style={{
+        width: "500px",
+        background: "white",
+        padding: "25px",
+        borderRadius: "10px",
+        textAlign: "center"
+      }}>
 
-        <h2>Misión</h2>
+        {!completed ? (
 
-        <div style={{ marginBottom: "10px" }}>
-          Tarea {currentTaskIndex + 1} / {tasks.length}
-        </div>
+          <>
+            <h2>Misión</h2>
 
-        <h3>{currentTask.title}</h3>
+            <div>
+              Tarea {currentTaskIndex + 1} / {tasks.length}
+            </div>
 
-        <p>{currentTask.description}</p>
+            <h3>{currentTask.title}</h3>
 
-        <div style={{ marginBottom: "10px" }}>
-          {currentTask.content}
-        </div>
+            <p>{currentTask.description}</p>
 
-        <textarea
-          style={{
-            width: "100%",
-            height: "100px"
-          }}
-          value={answer}
-          onChange={(e) =>
-            setAnswer(e.target.value)
-          }
-          placeholder="Escribe tu respuesta..."
-        />
+            <textarea
+              style={{ width: "100%", height: "100px" }}
+              value={answer}
+              onChange={(e) => setAnswer(e.target.value)}
+            />
 
-        <div
-          style={{
-            marginTop: "15px",
-            display: "flex",
-            justifyContent: "space-between"
-          }}
-        >
+            <div style={{ marginTop: "15px" }}>
 
-          <button onClick={onClose}>
-            Salir
-          </button>
+              <button onClick={onClose}>Salir</button>
 
-          <button onClick={completeTask}>
-            {currentTaskIndex === tasks.length - 1
-              ? `Completar misión (+${currentTask.xpReward} XP)`
-              : "Siguiente tarea"}
-          </button>
+              <button onClick={completeTask}>
+                {currentTaskIndex === tasks.length - 1
+                  ? "Completar misión"
+                  : "Siguiente"}
+              </button>
 
-        </div>
+            </div>
+
+          </>
+
+        ) : (
+
+          <>
+            <h2>🎉 ¡Misión completada!</h2>
+
+            <h3>+{xpEarned} XP 💥</h3>
+
+            <p>Nodo completado ⭐</p>
+
+            <p style={{ color: "#2ecc71" }}>
+              Nuevos caminos desbloqueados ✨
+            </p>
+
+          </>
+
+        )}
 
       </div>
 
