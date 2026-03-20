@@ -11,7 +11,14 @@ ReactDOM.createRoot(document.getElementById("root")).render(
       clientId="1jJgXJAN9YHNjRwCAcsKJoEOR31151qT"
       authorizationParams={{
         redirect_uri: window.location.origin,
-        audience: "https://misiones-api",
+        audience: "https://misiones-api"
+      }}
+      onRedirectCallback={(appState) => {
+        window.history.replaceState(
+          {},
+          document.title,
+          appState?.returnTo || window.location.pathname
+        );
       }}
     >
       <App />

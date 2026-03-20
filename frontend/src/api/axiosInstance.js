@@ -10,11 +10,24 @@ export const useAxios = () => {
 
   instance.interceptors.request.use(
     async (config) => {
+      console.log("➡️ INTERCEPTOR RUNNING");
 
       if (isAuthenticated) {
-        const token = await getAccessTokenSilently();
+        try {
+          const token = await getAccessTokenSilently({
+            authorizationParams: {
+              audience: "https://misiones-api"
+            }
+          });
 
-        config.headers.Authorization = `Bearer ${token}`;
+          console.log("✅ TOKEN:", token);
+
+          config.headers.Authorization = `Bearer ${token}`;
+        } catch (error) {
+          console.error("❌ Error getting token:", error);
+        }
+      } else {
+        console.warn("⚠️ User NOT authenticated");
       }
 
       return config;

@@ -17,25 +17,42 @@ export default function AuthButtons() {
     error
   });
 
+  // =========================
+  // LOADING
+  // =========================
+
   if (isLoading) return <p>Cargando Auth0...</p>;
 
   if (error) return <p>Error: {error.message}</p>;
 
+  // =========================
+  // RENDER
+  // =========================
+
   return (
-    <div style={{ position: "fixed", top: 10, right: 10 }}>
+    <div style={{ position: "fixed", top: 10, right: 10, zIndex: 999 }}>
       {!isAuthenticated ? (
-        <button onClick={() => loginWithRedirect()}>
+        <button
+          onClick={() =>
+            loginWithRedirect({
+              appState: {
+                returnTo: window.location.pathname
+              }
+            })
+          }
+        >
           Login
         </button>
       ) : (
-        <div>
+        <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
           <span>{user?.email}</span>
+
           <button
             onClick={() =>
               logout({
                 logoutParams: {
-                  returnTo: window.location.origin,
-                },
+                  returnTo: window.location.origin
+                }
               })
             }
           >

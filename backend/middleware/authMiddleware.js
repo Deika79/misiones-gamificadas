@@ -15,4 +15,15 @@ const checkJwt = jwt({
   algorithms: ["RS256"]
 });
 
-module.exports = checkJwt;
+// 🔥 DEBUG MIDDLEWARE
+module.exports = (req, res, next) => {
+  checkJwt(req, res, (err) => {
+    if (err) {
+      console.error("JWT ERROR:", err);
+      return res.status(401).json({ error: err.message });
+    }
+
+    console.log("JWT OK:", req.auth);
+    next();
+  });
+};

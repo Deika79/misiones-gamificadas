@@ -9,6 +9,7 @@ import ReactFlow, {
 } from "reactflow";
 
 import { useParams } from "react-router-dom";
+import { useAuth0 } from "@auth0/auth0-react";
 
 import "reactflow/dist/style.css";
 import { useAxios } from "../api/axiosInstance";
@@ -25,7 +26,9 @@ const nodeTypes = {
 // =========================
 function MissionMapInner() {
 
-  const axios = useAxios(); // ✅ HOOK BIEN COLOCADO
+  const axios = useAxios();
+
+  const { isAuthenticated, isLoading } = useAuth0();
 
   const { missionId } = useParams();
   const { screenToFlowPosition } = useReactFlow();
@@ -46,6 +49,8 @@ function MissionMapInner() {
   // =========================
 
   useEffect(() => {
+
+    if (!isAuthenticated) return;
 
     const loadNodes = async () => {
       try {
@@ -96,13 +101,15 @@ function MissionMapInner() {
       loadNodes();
     }
 
-  }, [missionId]);
+  }, [missionId, isAuthenticated]);
 
   // =========================
   // AUTOSAVE
   // =========================
 
   useEffect(() => {
+
+    if (!isAuthenticated) return;
 
     if (saveTimeout.current) {
       clearTimeout(saveTimeout.current);
@@ -131,13 +138,15 @@ function MissionMapInner() {
 
     }, 2000);
 
-  }, [nodes, edges, missionId]);
+  }, [nodes, edges, missionId, isAuthenticated]);
 
   // =========================
   // CREAR NODO
   // =========================
 
   const onPaneClick = useCallback(async (event) => {
+
+    if (!isAuthenticated) return;
 
     const position = screenToFlowPosition({
       x: event.clientX,
@@ -176,7 +185,7 @@ function MissionMapInner() {
       console.error("Error creando nodo:", error);
     }
 
-  }, [screenToFlowPosition, missionId]);
+  }, [screenToFlowPosition, missionId, isAuthenticated]);
 
   // =========================
   // CLICK NODO
@@ -191,6 +200,8 @@ function MissionMapInner() {
   // =========================
 
   const onNodeDragStop = async (event, node) => {
+    if (!isAuthenticated) return;
+
     try {
       await axios.put(`/nodes/${node.id}`, {
         position: node.position
@@ -205,6 +216,8 @@ function MissionMapInner() {
   // =========================
 
   const onConnect = useCallback(async (params) => {
+
+    if (!isAuthenticated) return;
 
     setEdges((eds) =>
       addEdge(
@@ -229,7 +242,14 @@ function MissionMapInner() {
       console.error("Error conectando nodos:", error);
     }
 
-  }, []);
+  }, [isAuthenticated]);
+
+  // =========================
+  // BLOQUEO HASTA AUTH
+  // =========================
+
+  if (isLoading) return <div>Cargando auth...</div>;
+  if (!isAuthenticated) return <div>No autenticado</div>;
 
   // =========================
   // RENDER
@@ -257,6 +277,9 @@ function MissionMapInner() {
           onNodeDragStop={onNodeDragStop}
           onConnect={onConnect}
           fitView
+
+          zoomOnScroll={false}
+          panOnScroll={true}
         >
           <Controls />
         </ReactFlow>
