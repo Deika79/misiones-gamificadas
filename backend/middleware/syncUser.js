@@ -1,25 +1,36 @@
-const User = require("../models/User");
+const User = require("../models/User")
 
 module.exports = async (req, res, next) => {
   try {
-    const { auth0Id, email } = req.user;
 
-    let user = await User.findOne({ auth0Id });
+    // 🔥 CAMBIO CLAVE: usar req.auth
+    const auth0Id = req.auth?.sub
+    const email = req.auth?.email || ""
 
-    if (!user) {
-      user = new User({
-        auth0Id,
-        email
-      });
-
-      await user.save();
+    if (!auth0Id) {
+      console.error("❌ No auth0Id in token")
+      return next()
     }
 
-    req.dbUser = user;
+    let user = await User.findOne({ auth0Id })
 
-    next();
+    if (!user) {
+      user = await User.create({
+        auth0Id,
+        email,
+        role: "student"
+      })
+
+      console.log("✅ User created:", auth0Id)
+    }
+
+    // ✅ guardar usuario en request
+    req.dbUser = user
+
+    next()
+
   } catch (error) {
-    console.error("Error syncing user:", error);
-    res.status(500).json({ message: "Error de servidor" });
+    console.error("❌ Error syncing user:", error)
+    next()
   }
-};
+}

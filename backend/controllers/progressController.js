@@ -2,9 +2,17 @@ const Progress = require("../models/Progress");
 const Node = require("../models/Node");
 
 
+// =========================
 // ✅ POST /progress/complete
+// =========================
 exports.completeNode = async (req, res) => {
   try {
+
+    // 🔥 PROTECCIÓN CRÍTICA
+    if (!req.dbUser) {
+      return res.status(401).json({ message: "User not loaded in request" });
+    }
+
     const userId = req.dbUser._id;
     const { missionId, nodeId } = req.body;
 
@@ -35,8 +43,12 @@ exports.completeNode = async (req, res) => {
       });
     }
 
-    // Evitar duplicados
-    if (progress.completedNodes.includes(nodeId)) {
+    // 🔥 Evitar duplicados (IMPORTANTE usar string)
+    const alreadyCompleted = progress.completedNodes.some(
+      (id) => id.toString() === nodeId
+    );
+
+    if (alreadyCompleted) {
       return res.json(progress);
     }
 
@@ -47,20 +59,29 @@ exports.completeNode = async (req, res) => {
     await progress.save();
 
     res.json(progress);
+
   } catch (error) {
-    console.error(error);
+    console.error("❌ completeNode error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
 
 
+// =========================
 // ✅ GET /progress/mission/:missionId
+// =========================
 exports.getMissionProgress = async (req, res) => {
   try {
+
+    // 🔥 PROTECCIÓN CRÍTICA
+    if (!req.dbUser) {
+      return res.status(401).json({ message: "User not loaded in request" });
+    }
+
     const userId = req.dbUser._id;
     const { missionId } = req.params;
 
-    let progress = await Progress.findOne({
+    const progress = await Progress.findOne({
       user: userId,
       mission: missionId,
     });
@@ -72,9 +93,13 @@ exports.getMissionProgress = async (req, res) => {
       });
     }
 
-    res.json(progress);
+    res.json({
+      completedNodes: progress.completedNodes,
+      xp: progress.xp,
+    });
+
   } catch (error) {
-    console.error(error);
+    console.error("❌ getMissionProgress error:", error);
     res.status(500).json({ message: "Server error" });
   }
 };
