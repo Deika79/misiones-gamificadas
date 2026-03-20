@@ -16,19 +16,63 @@ import "reactflow/dist/style.css"
 function StudentMissionMap() {
 
   const { missionId } = useParams()
-  const userId = "demoUser"
 
   const [nodes, setNodes, onNodesChange] = useNodesState([])
   const [edges, setEdges, onEdgesChange] = useEdgesState([])
 
   const [xp, setXp] = useState(0)
-  const [progress, setProgress] = useState(0)
-  const [completed, setCompleted] = useState(0)
-  const [total, setTotal] = useState(0)
+  const [completedNodes, setCompletedNodes] = useState([])
 
   const [activeNode, setActiveNode] = useState(null)
-
   const [toast, setToast] = useState(null)
+
+  // =========================
+  // HELPERS
+  // =========================
+
+  const getNodeStatus = (node, allNodes, completedNodes) => {
+
+    // Si ya está completado
+    if (completedNodes.includes(node.id)) {
+      return "completed"
+    }
+
+    // Si no tiene dependencias → disponible
+    if (!node.data.prerequisites || node.data.prerequisites.length === 0) {
+      return "available"
+    }
+
+    // Verificar dependencias
+    const allCompleted = node.data.prerequisites.every(id =>
+      completedNodes.includes(id)
+    )
+
+    return allCompleted ? "available" : "locked"
+  }
+
+  const getNodeStyle = (status) => {
+    switch (status) {
+      case "completed":
+        return {
+          background: "#2ecc71",
+          color: "white",
+          border: "2px solid #27ae60"
+        }
+      case "available":
+        return {
+          background: "#3498db",
+          color: "white",
+          border: "2px solid #2980b9"
+        }
+      case "locked":
+      default:
+        return {
+          background: "#555",
+          color: "#aaa",
+          border: "2px solid #333"
+        }
+    }
+  }
 
   // =========================
   // CARGAR
@@ -36,41 +80,61 @@ function StudentMissionMap() {
 
   const loadMission = async () => {
 
-    const res = await axios.get(
-      `http://localhost:5000/missions/${missionId}/student/${userId}`
-    )
+    try {
 
-    const formattedNodes = res.data.nodes.map(node => ({
-      id: node.id,
-      position: node.position,
-      data: {
-        label: node.title,
-        status: node.status
-      },
-      draggable: false
-    }))
+      // 🔹 1. Cargar misión (SIN userId)
+      const res = await axios.get(
+        `http://localhost:5000/missions/${missionId}`
+      )
 
-    const formattedEdges = res.data.edges.map(edge => ({
-      ...edge,
-      type: "smoothstep",
-      style: {
-        stroke: "#000",
-        strokeWidth: 3
-      }
-    }))
+      const missionNodes = res.data.nodes
 
-    setNodes(formattedNodes)
-    setEdges(formattedEdges)
+      // 🔹 2. Cargar progreso del usuario autenticado
+      const progressRes = await axios.get(
+        `http://localhost:5000/api/progress/mission/${missionId}`
+      )
 
-    const progressRes = await axios.get(
-      `http://localhost:5000/progress/mission/${missionId}/${userId}`
-    )
+      const completed = progressRes.data.completedNodes || []
+      const xpValue = progressRes.data.xp || 0
 
-    setXp(progressRes.data.totalXP)
-    setProgress(progressRes.data.progressPercentage)
-    setCompleted(progressRes.data.completedNodes)
-    setTotal(progressRes.data.totalNodes)
+      setCompletedNodes(completed)
+      setXp(xpValue)
 
+      // 🔹 3. Formatear nodos con estado dinámico
+      const formattedNodes = missionNodes.map(node => {
+
+        const status = getNodeStatus(node, missionNodes, completed)
+
+        return {
+          id: node._id,
+          position: node.position,
+          data: {
+            label: node.title,
+            status,
+            prerequisites: node.prerequisites || []
+          },
+          style: getNodeStyle(status),
+          draggable: false
+        }
+      })
+
+      // 🔹 4. Edges
+      const formattedEdges = res.data.edges.map(edge => ({
+        ...edge,
+        type: "smoothstep",
+        style: {
+          stroke: "#000",
+          strokeWidth: 3
+        }
+      }))
+
+      setNodes(formattedNodes)
+      setEdges(formattedEdges)
+
+    } catch (err) {
+      console.error(err)
+      setToast("Error cargando misión")
+    }
   }
 
   useEffect(() => {
@@ -98,8 +162,17 @@ function StudentMissionMap() {
     if (status === "completed") {
       setToast("Nodo ya completado ⭐")
     }
-
   }
+
+  // =========================
+  // UI HELPERS
+  // =========================
+
+  const total = nodes.length
+  const completedCount = completedNodes.length
+  const progress = total > 0
+    ? Math.round((completedCount / total) * 100)
+    : 0
 
   return (
 
@@ -115,7 +188,7 @@ function StudentMissionMap() {
 
         <div>XP: {xp}</div>
         <div>
-          Progreso: {completed}/{total} ({progress}%)
+          Progreso: {completedCount}/{total} ({progress}%)
         </div>
 
         <div style={{
@@ -157,12 +230,25 @@ function StudentMissionMap() {
       {activeNode && (
         <TaskPlayer
           nodeId={activeNode}
-          userId={userId}
           onClose={() => setActiveNode(null)}
-          onCompleted={() => {
-            setActiveNode(null)
-            setToast("¡Misión completada! +XP 💥")
-            loadMission()
+          onCompleted={async () => {
+
+            try {
+              await axios.post("http://localhost:5000/api/progress/complete", {
+                missionId,
+                nodeId: activeNode
+              })
+
+              setActiveNode(null)
+              setToast("¡Misión completada! +XP 💥")
+
+              loadMission()
+
+            } catch (err) {
+              console.error(err)
+              setToast("Error completando nodo")
+            }
+
           }}
         />
       )}
