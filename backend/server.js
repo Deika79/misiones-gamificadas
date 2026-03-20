@@ -11,17 +11,14 @@ const taskRoutes = require("./routes/tasks")
 const courseRoutes = require("./routes/courses")
 const chapterRoutes = require("./routes/chapters")
 
-// NUEVA ruta modo alumno
+// Modo alumno
 const studentMissionRoutes = require("./routes/studentMissionRoutes")
+
+// ✅ Progreso (SOLO UNA VEZ)
+const progressRoutes = require("./routes/progressRoutes")
 
 // Crear app
 const app = express()
-
-// NUEVA ruta para progreso alumno
-const progressRoutes = require("./routes/progress")
-
-// NUEVA ruta para progreso alumno
-const progressRoutes = require("./routes/progressRoutes");
 
 // Middlewares
 app.use(cors())
@@ -32,32 +29,28 @@ app.get("/", (req, res) => {
   res.send("API Misiones funcionando")
 })
 
-// Rutas existentes
+// Rutas principales
 app.use("/missions", missionRoutes)
 app.use("/nodes", nodeRoutes)
 app.use("/tasks", taskRoutes)
 
-// NUEVAS rutas
 app.use("/courses", courseRoutes)
 app.use("/chapters", chapterRoutes)
 
-// NUEVA ruta para progreso alumno
-app.use("/progress", progressRoutes)
+// ✅ Progreso (ruta limpia)
+app.use("/api/progress", progressRoutes)
 
-// NUEVA ruta modo alumno
+// Modo alumno
 app.use("/", studentMissionRoutes)
-
-// NUEVA ruta para progreso alumno
-app.use("/api/progress", progressRoutes);
 
 // Conexión a MongoDB
 mongoose.connect(process.env.MONGO_URI)
-.then(() => {
-  console.log("MongoDB conectado")
-})
-.catch((error) => {
-  console.error("Error conectando a MongoDB:", error)
-})
+  .then(() => {
+    console.log("MongoDB conectado")
+  })
+  .catch((error) => {
+    console.error("Error conectando a MongoDB:", error)
+  })
 
 // Arrancar servidor
 const PORT = 5000
