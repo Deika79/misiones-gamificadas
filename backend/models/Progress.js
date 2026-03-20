@@ -1,32 +1,32 @@
-const mongoose = require("mongoose")
+const mongoose = require("mongoose");
 
-const ProgressSchema = new mongoose.Schema({
-
-  userId: {
-    type: String,
-    required: true
+const progressSchema = new mongoose.Schema(
+  {
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    mission: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Mission",
+      required: true,
+    },
+    completedNodes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Node",
+      },
+    ],
+    xp: {
+      type: Number,
+      default: 0,
+    },
   },
+  { timestamps: true }
+);
 
-  nodeId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: "Node",
-    required: true
-  },
+// 🔥 Evita duplicados user+mission
+progressSchema.index({ user: 1, mission: 1 }, { unique: true });
 
-  completed: {
-    type: Boolean,
-    default: false
-  },
-
-  xpEarned: {
-    type: Number,
-    default: 0
-  },
-
-  completedAt: {
-    type: Date
-  }
-
-})
-
-module.exports = mongoose.model("Progress", ProgressSchema)
+module.exports = mongoose.model("Progress", progressSchema);

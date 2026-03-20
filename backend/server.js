@@ -20,6 +20,9 @@ const app = express()
 // NUEVA ruta para progreso alumno
 const progressRoutes = require("./routes/progress")
 
+// NUEVA ruta para progreso alumno
+const progressRoutes = require("./routes/progressRoutes");
+
 // Middlewares
 app.use(cors())
 app.use(express.json())
@@ -43,6 +46,9 @@ app.use("/progress", progressRoutes)
 
 // NUEVA ruta modo alumno
 app.use("/", studentMissionRoutes)
+
+// NUEVA ruta para progreso alumno
+app.use("/api/progress", progressRoutes);
 
 // Conexión a MongoDB
 mongoose.connect(process.env.MONGO_URI)
